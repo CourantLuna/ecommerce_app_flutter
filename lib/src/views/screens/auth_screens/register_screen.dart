@@ -24,12 +24,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Scaffold(
       appBar: AppBar(title: const Text("Sign Up"), backgroundColor: Colors.transparent, elevation: 0),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(defaultPadding),
         child: Column(
           children: [
+            Image.asset(
+              isDark ? 'assets/images/register_dark.png' : 'assets/images/register_light.png',
+              fit: BoxFit.cover,
+              height: 200,
+            ),
+            const SizedBox(height: defaultPadding),
             const Text("Create Account", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
             const SizedBox(height: defaultPadding * 2),
             

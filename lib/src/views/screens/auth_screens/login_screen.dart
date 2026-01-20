@@ -23,11 +23,16 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Scaffold(
       body: SingleChildScrollView(
         child: Column(
           children: [
-            Image.asset('assets/images/login_dark.png', fit: BoxFit.cover),
+            Image.asset(
+              isDark ? 'assets/images/login_dark.png' : 'assets/images/login_light.png',
+              fit: BoxFit.cover,
+            ),
             Padding(
               padding: const EdgeInsets.all(defaultPadding),
               child: Column(
@@ -117,7 +122,7 @@ class _LoginScreenState extends State<LoginScreen> {
       // Icono de Google (texto simple si no tienes la imagen)
       const Icon(Icons.g_mobiledata, size: 30, color: Colors.red), 
       const SizedBox(width: 10),
-      const Text("Sign in with Google", style: TextStyle(color: Colors.black)),
+      const Text("Sign in with Google"),
     ],
   ),
 ),
