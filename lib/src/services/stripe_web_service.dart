@@ -47,9 +47,15 @@ class StripeWebService {
           try {
             const stripe = window.stripeInstance;
             
+            // Detectar tema oscuro
+            const isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            
             // Crear elementos de Stripe
             const elements = stripe.elements({
               clientSecret: '$clientSecret',
+              appearance: {
+                theme: isDark ? 'night' : 'stripe',
+              }
             });
             
             // Crear el Payment Element
@@ -58,10 +64,12 @@ class StripeWebService {
             // Crear un contenedor temporal
             const container = document.createElement('div');
             container.id = 'stripe-payment-element-container';
-            container.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 10000; width: 400px; max-width: 90%;';
+            const bgColor = isDark ? '#1E1E1E' : 'white';
+            const textColor = isDark ? 'white' : 'black';
+            container.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: ' + bgColor + '; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); z-index: 10000; width: 400px; max-width: 90%;';
             
             const header = document.createElement('div');
-            header.innerHTML = '<h3 style="margin: 0 0 20px 0;">Agregar Método de Pago</h3>';
+            header.innerHTML = '<h3 style="margin: 0 0 20px 0; color: ' + textColor + ';">Agregar Método de Pago</h3>';
             container.appendChild(header);
             
             const elementContainer = document.createElement('div');
@@ -72,7 +80,10 @@ class StripeWebService {
             
             const cancelBtn = document.createElement('button');
             cancelBtn.textContent = 'Cancelar';
-            cancelBtn.style.cssText = 'padding: 10px 20px; border: 1px solid #ccc; background: white; border-radius: 4px; cursor: pointer;';
+            const cancelBg = isDark ? '#2D2D2D' : 'white';
+            const cancelBorder = isDark ? '#444' : '#ccc';
+            const cancelText = isDark ? 'white' : 'black';
+            cancelBtn.style.cssText = 'padding: 10px 20px; border: 1px solid ' + cancelBorder + '; background: ' + cancelBg + '; color: ' + cancelText + '; border-radius: 4px; cursor: pointer;';
             cancelBtn.onclick = () => {
               document.body.removeChild(container);
               window.stripeSetupResult = 'cancelled';

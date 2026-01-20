@@ -104,7 +104,11 @@ class AddressSelector extends StatelessWidget {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       isScrollControlled: true,
+      backgroundColor: Theme.of(context).brightness == Brightness.dark
+          ? Theme.of(context).cardColor
+          : Colors.white,
       builder: (context) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
         return DraggableScrollableSheet(
           initialChildSize: 0.6,
           minChildSize: 0.4,
@@ -119,11 +123,12 @@ class AddressSelector extends StatelessWidget {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
+                      Text(
                         "Seleccionar Dirección",
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
+                          color: isDark ? Colors.white : Colors.black,
                         ),
                       ),
                       TextButton.icon(
@@ -136,8 +141,17 @@ class AddressSelector extends StatelessWidget {
                             ),
                           );
                         },
-                        icon: const Icon(Icons.settings, size: 18),
-                        label: const Text("Gestionar"),
+                        icon: Icon(
+                          Icons.settings,
+                          size: 18,
+                          color: Theme.of(context).primaryColor,
+                        ),
+                        label: Text(
+                          "Gestionar",
+                          style: TextStyle(
+                            color: Theme.of(context).primaryColor,
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -170,8 +184,18 @@ class AddressSelector extends StatelessWidget {
                                 color: Theme.of(context).primaryColor,
                               ),
                             ),
-                            title: const Text("Ubicación actual"),
-                            subtitle: const Text("Usar mi ubicación actual"),
+                            title: Text(
+                              "Ubicación actual",
+                              style: TextStyle(
+                                color: isDark ? Colors.white : Colors.black87,
+                              ),
+                            ),
+                            subtitle: Text(
+                              "Usar mi ubicación actual",
+                              style: TextStyle(
+                                color: isDark ? Colors.grey[400] : Colors.grey[600],
+                              ),
+                            ),
                             trailing: selectedAddress == null
                                 ? Icon(
                                     Icons.check_circle,
@@ -195,17 +219,26 @@ class AddressSelector extends StatelessWidget {
                                     ? Theme.of(
                                         context,
                                       ).primaryColor.withOpacity(0.1)
-                                    : Colors.grey[200],
+                                    : isDark
+                                        ? Colors.grey[700]
+                                        : Colors.grey[300],
                                 child: Icon(
                                   Icons.location_on,
                                   color: address.isDefault
                                       ? Theme.of(context).primaryColor
-                                      : Colors.grey[600],
+                                      : isDark
+                                          ? Colors.grey[400]
+                                          : Colors.grey[600],
                                 ),
                               ),
                               title: Row(
                                 children: [
-                                  Text(address.name),
+                                  Text(
+                                    address.name,
+                                    style: TextStyle(
+                                      color: isDark ? Colors.white : Colors.black87,
+                                    ),
+                                  ),
                                   if (address.isDefault) ...[
                                     const SizedBox(width: 8),
                                     Container(
@@ -235,6 +268,9 @@ class AddressSelector extends StatelessWidget {
                                 address.fullAddress,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: isDark ? Colors.grey[400] : Colors.grey[600],
+                                ),
                               ),
                               trailing: isSelected
                                   ? Icon(
