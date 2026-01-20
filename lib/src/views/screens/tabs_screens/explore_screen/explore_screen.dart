@@ -29,6 +29,11 @@ class _ExploreScreenState extends State<ExploreScreen> {
   AddressModel? _selectedAddress;
   bool _loadingAddress = true;
 
+  // Filtros adicionales
+  RangeValues _priceRange = const RangeValues(0, 1000);
+  double _maxDeliveryTime = 60; // minutos
+  double _minRating = 0; // 0 a 5
+
   // Categorías disponibles (Deben coincidir con tu 'foodType' en Firebase)
   final List<String> _categories = [
     "Todas",
@@ -155,7 +160,29 @@ class _ExploreScreenState extends State<ExploreScreen> {
                           _selectedCategory == "Todas" ||
                           rest.foodType == _selectedCategory;
 
-                      return matchesSearch && matchesCategory;
+                      // Filtro de precio (asumir que hay un campo de precio promedio)
+                      final averagePrice = (rest.deliveryFee is num) ? (rest.deliveryFee as num).toDouble() : 0.0;
+                      final matchesPrice =
+                          averagePrice >= _priceRange.start &&
+                          averagePrice <= _priceRange.end;
+
+                      // Filtro de tiempo de entrega
+                      final deliveryTimeMatch = RegExp(r'(\d+)').firstMatch(rest.deliveryTime);
+                      final deliveryTime = deliveryTimeMatch != null 
+                          ? double.tryParse(deliveryTimeMatch.group(1)!) ?? 999
+                          : 999;
+                      final matchesDeliveryTime =
+                          deliveryTime <= _maxDeliveryTime;
+
+                      // Filtro de calificación
+                      final rating = (rest.rating is num) ? (rest.rating as num).toDouble() : 0.0;
+                      final matchesRating = rating >= _minRating;
+
+                      return matchesSearch &&
+                          matchesCategory &&
+                          matchesPrice &&
+                          matchesDeliveryTime &&
+                          matchesRating;
                     }).toList();
 
                     // 3. Preparar las listas para la UI
@@ -415,62 +442,285 @@ class _ExploreScreenState extends State<ExploreScreen> {
   void _showFilterModal(BuildContext context) {
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) {
-        return Container(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                "Filtrar por Categoría",
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 20),
-              Wrap(
-                spacing: 10,
-                runSpacing: 10,
-                children: _categories.map((category) {
-                  final isSelected =
-                      _selectedCategory == category ||
-                      (_selectedCategory == null && category == "Todas");
-                  return FilterChip(
-                    label: Text(category),
-                    selected: isSelected,
-                    selectedColor: Theme.of(
-                      context,
-                    ).primaryColor.withOpacity(0.2),
-                    checkmarkColor: Theme.of(context).primaryColor,
-                    labelStyle: TextStyle(
-                      color: isSelected
-                          ? Theme.of(context).primaryColor
-                          : Colors.black,
-                      fontWeight: isSelected
-                          ? FontWeight.bold
-                          : FontWeight.normal,
-                    ),
-                    onSelected: (bool selected) {
-                      setState(() {
-                        if (category == "Todas") {
-                          _selectedCategory = null;
-                        } else {
-                          _selectedCategory = category;
-                        }
-                      });
-                      Navigator.pop(context); // Cierra el modal
-                    },
-                  );
-                }).toList(),
-              ),
-              const SizedBox(height: 20),
-            ],
-          ),
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return DraggableScrollableSheet(
+              initialChildSize: 0.75,
+              minChildSize: 0.5,
+              maxChildSize: 0.9,
+              expand: false,
+              builder: (context, scrollController) {
+                return SingleChildScrollView(
+                  controller: scrollController,
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            "Filtros",
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              setModalState(() {
+                                _selectedCategory = null;
+                                _priceRange = const RangeValues(0, 1000);
+                                _maxDeliveryTime = 60;
+                                _minRating = 0;
+                              });
+                              setState(() {
+                                _selectedCategory = null;
+                                _priceRange = const RangeValues(0, 1000);
+                                _maxDeliveryTime = 60;
+                                _minRating = 0;
+                              });
+                            },
+                            child: const Text("Limpiar"),
+                          ),
+                        ],
+                      ),
+                      const Divider(),
+                      const SizedBox(height: 15),
+
+                      // CATEGORÍA
+                      const Text(
+                        "Categoría",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: _categories.map((category) {
+                          final isSelected =
+                              _selectedCategory == category ||
+                              (_selectedCategory == null &&
+                                  category == "Todas");
+                          return FilterChip(
+                            label: Text(category),
+                            selected: isSelected,
+                            selectedColor: Theme.of(
+                              context,
+                            ).primaryColor.withOpacity(0.2),
+                            checkmarkColor: Theme.of(context).primaryColor,
+                            labelStyle: TextStyle(
+                              color: isSelected
+                                  ? Theme.of(context).primaryColor
+                                  : Colors.black,
+                              fontWeight: isSelected
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
+                            ),
+                            onSelected: (bool selected) {
+                              setModalState(() {
+                                if (category == "Todas") {
+                                  _selectedCategory = null;
+                                } else {
+                                  _selectedCategory = category;
+                                }
+                              });
+                              setState(() {
+                                if (category == "Todas") {
+                                  _selectedCategory = null;
+                                } else {
+                                  _selectedCategory = category;
+                                }
+                              });
+                            },
+                          );
+                        }).toList(),
+                      ),
+
+                      const SizedBox(height: 25),
+
+                      // RANGO DE PRECIO
+                      const Text(
+                        "Rango de Precio (Envío)",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 5),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            "\$${_priceRange.start.round()}",
+                            style: TextStyle(color: Colors.grey[700]),
+                          ),
+                          Text(
+                            "\$${_priceRange.end.round()}",
+                            style: TextStyle(color: Colors.grey[700]),
+                          ),
+                        ],
+                      ),
+                      RangeSlider(
+                        values: _priceRange,
+                        min: 0,
+                        max: 1000,
+                        divisions: 20,
+                        labels: RangeLabels(
+                          "\$${_priceRange.start.round()}",
+                          "\$${_priceRange.end.round()}",
+                        ),
+                        onChanged: (RangeValues values) {
+                          setModalState(() {
+                            _priceRange = values;
+                          });
+                          setState(() {
+                            _priceRange = values;
+                          });
+                        },
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      // TIEMPO DE ENTREGA
+                      const Text(
+                        "Tiempo de Entrega Máximo",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 5),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text("10 min"),
+                          Text(
+                            "${_maxDeliveryTime.round()} min",
+                            style: TextStyle(
+                              color: Theme.of(context).primaryColor,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Slider(
+                        value: _maxDeliveryTime,
+                        min: 10,
+                        max: 60,
+                        divisions: 10,
+                        label: "${_maxDeliveryTime.round()} min",
+                        onChanged: (double value) {
+                          setModalState(() {
+                            _maxDeliveryTime = value;
+                          });
+                          setState(() {
+                            _maxDeliveryTime = value;
+                          });
+                        },
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      // CALIFICACIÓN MÍNIMA
+                      const Text(
+                        "Calificación Mínima",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 5),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text("0 ⭐"),
+                          Text(
+                            "${_minRating.toStringAsFixed(1)} ⭐",
+                            style: TextStyle(
+                              color: Colors.amber[700],
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Slider(
+                        value: _minRating,
+                        min: 0,
+                        max: 5,
+                        divisions: 10,
+                        label: "${_minRating.toStringAsFixed(1)} ⭐",
+                        activeColor: Colors.amber,
+                        onChanged: (double value) {
+                          setModalState(() {
+                            _minRating = value;
+                          });
+                          setState(() {
+                            _minRating = value;
+                          });
+                        },
+                      ),
+
+                      const SizedBox(height: 30),
+
+                      // BOTÓN APLICAR
+                      SizedBox(
+                        width: double.infinity,
+                        height: 50,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Navigator.pop(context);
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Theme.of(context).primaryColor,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: const Text(
+                            "Aplicar Filtros",
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            );
+          },
         );
       },
     );
+  }
+
+  bool _hasActiveFilters() {
+    return (_selectedCategory != null && _selectedCategory != "Todas") ||
+        _priceRange.start > 0 ||
+        _priceRange.end < 1000 ||
+        _maxDeliveryTime < 60 ||
+        _minRating > 0;
+  }
+
+  void _clearAllFilters() {
+    setState(() {
+      _selectedCategory = null;
+      _priceRange = const RangeValues(0, 1000);
+      _maxDeliveryTime = 60;
+      _minRating = 0;
+    });
   }
 
   // --- SELECTOR DE DIRECCIÓN ---
