@@ -1,7 +1,6 @@
 import 'package:ecommerce_app/constants.dart';
 import 'package:ecommerce_app/src/services/auth_service.dart';
 import 'package:ecommerce_app/src/views/components/register_form.dart';
-import 'package:ecommerce_app/src/views/screens/tabs_screens/tab_screen.dart';
 import 'package:flutter/material.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -13,9 +12,14 @@ class RegisterScreen extends StatefulWidget {
 
 class _RegisterScreenState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _nameCtrl = TextEditingController();
+  
+  // 1. NUEVOS CONTROLADORES
+  final _firstNameCtrl = TextEditingController();
+  final _lastNameCtrl = TextEditingController();
+  final _phoneCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
+  
   bool _isLoading = false;
 
   @override
@@ -29,9 +33,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
             const Text("Create Account", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
             const SizedBox(height: defaultPadding * 2),
             
+            // 2. FORMULARIO ACTUALIZADO
             RegisterForm(
               formKey: _formKey,
-              nameController: _nameCtrl,
+              firstNameController: _firstNameCtrl,
+              lastNameController: _lastNameCtrl,
+              phoneController: _phoneCtrl,
               emailController: _emailCtrl,
               passwordController: _passCtrl,
             ),
@@ -39,37 +46,57 @@ class _RegisterScreenState extends State<RegisterScreen> {
             const SizedBox(height: defaultPadding * 2),
             
             SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: _isLoading ? null : () async {
-                  if (_formKey.currentState!.validate()) {
-                    setState(() => _isLoading = true);
-                    
-                    // CREAR USUARIO EN FIREBASE
-                    final user = await AuthService().register(
-                      _emailCtrl.text.trim(),
-                      _passCtrl.text.trim(),
-                      _nameCtrl.text.trim(),
-                    );
-                    
-                    setState(() => _isLoading = false);
+  width: double.infinity,
+  child: ElevatedButton(
+    onPressed: _isLoading ? null : () async {
+      // 1. Validamos que cumpla todas las reglas (Mayúsculas, números, etc.)
+      if (_formKey.currentState!.validate()) {
+        
+        // Iniciamos la carga
+        setState(() => _isLoading = true);
 
-                    if (user != null) {
-                      Navigator.pushAndRemoveUntil(
-                        context,
-                        MaterialPageRoute(builder: (_) => const TabScreen()),
-                        (route) => false,
-                      );
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                         const SnackBar(content: Text("Error al registrar. El correo ya existe.")),
-                      );
-                    }
-                  }
-                },
-                child: _isLoading ? const CircularProgressIndicator() : const Text("Register"),
+        try {
+          // 2. Intentamos registrar
+          final user = await AuthService().register(
+            email: _emailCtrl.text.trim(),
+            password: _passCtrl.text.trim(),
+            firstName: _firstNameCtrl.text.trim(),
+            lastName: _lastNameCtrl.text.trim(),
+            phone: _phoneCtrl.text.trim(),
+          );
+
+          if (!mounted) return; // Si la pantalla se cerró, paramos.
+
+          if (user != null) {
+            // ÉXITO: Cerramos pantalla (el AuthGate nos llevará al Home)
+            Navigator.pop(context);
+          } else {
+            // ERROR CONOCIDO (AuthService devolvió null)
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text("Error al registrar. Revisa si el correo ya existe."),
+                backgroundColor: Colors.red,
               ),
-            ),
+            );
+          }
+        } catch (e) {
+          // ERROR INESPERADO
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Error inesperado: $e")),
+          );
+        } finally {
+          // 3. ESTO SE EJECUTA SIEMPRE: Quitamos el cargando
+          if (mounted) {
+            setState(() => _isLoading = false);
+          }
+        }
+      }
+    },
+    child: _isLoading 
+      ? const CircularProgressIndicator(color: Colors.white) 
+      : const Text("Register"),
+  ),
+),
           ],
         ),
       ),

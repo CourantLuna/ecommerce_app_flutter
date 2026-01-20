@@ -33,7 +33,9 @@ class IntecEcommerceApp extends StatelessWidget {
       theme: AppTheme.lightTheme(context),
       debugShowCheckedModeBanner: false,
       // 4. Cambiamos 'TabScreen' por 'LoginScreen' para obligar a iniciar sesión
-      home: const AuthGate(),
+      home: const AuthGate()
+      //AdminSeederScreen()
+      
       );
   }
 }
