@@ -237,4 +237,102 @@ class StripeService {
       return false;
     }
   }
+
+  // ========================================
+  // CREAR PAYMENT INTENT (Para procesar pagos)
+  // ========================================
+  Future<Map<String, dynamic>?> createPaymentIntent({
+    required double amount,
+    required String currency,
+    String? paymentMethodId,
+  }) async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null) return null;
+
+      final userDoc = await _firestore.collection('users').doc(user.uid).get();
+      final stripeCustomerId = userDoc.data()?['stripeCustomerId'] as String?;
+
+      if (stripeCustomerId == null) {
+        print('⚠️ Usuario no tiene stripeCustomerId');
+        return null;
+      }
+
+      // Convertir monto a centavos
+      final amountInCents = (amount * 100).toInt();
+
+      final body = {
+        'amount': amountInCents.toString(),
+        'currency': currency.toLowerCase(),
+        'customer': stripeCustomerId,
+        'automatic_payment_methods[enabled]': 'true',
+      };
+
+      // Si se proporciona un método de pago específico
+      if (paymentMethodId != null && paymentMethodId.isNotEmpty) {
+        body['payment_method'] = paymentMethodId;
+        body['confirm'] = 'true';
+        body['off_session'] = 'true';
+      }
+
+      final response = await http.post(
+        Uri.parse('https://api.stripe.com/v1/payment_intents'),
+        headers: {
+          'Authorization': 'Bearer $_secretKey',
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: body,
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return {
+          'clientSecret': data['client_secret'],
+          'paymentIntentId': data['id'],
+          'status': data['status'],
+        };
+      } else {
+        print('Error creando PaymentIntent: ${response.body}');
+        return null;
+      }
+    } catch (e) {
+      print('Error en createPaymentIntent: $e');
+      return null;
+    }
+  }
+
+  // ========================================
+  // CONFIRMAR PAGO
+  // ========================================
+  Future<Map<String, dynamic>?> confirmPayment({
+    required String paymentIntentId,
+    required String paymentMethodId,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('https://api.stripe.com/v1/payment_intents/$paymentIntentId/confirm'),
+        headers: {
+          'Authorization': 'Bearer $_secretKey',
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: {
+          'payment_method': paymentMethodId,
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return {
+          'status': data['status'],
+          'paymentIntentId': data['id'],
+        };
+      } else {
+        print('Error confirmando pago: ${response.body}');
+        return null;
+      }
+    } catch (e) {
+      print('Error en confirmPayment: $e');
+      return null;
+    }
+  }
 }

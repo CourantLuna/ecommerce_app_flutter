@@ -1,6 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:ecommerce_app/src/models/address_model.dart';
+import 'package:ecommerce_app/src/models/order_model.dart';
+import 'package:ecommerce_app/src/services/address_service.dart';
 import 'package:ecommerce_app/src/services/cart_service.dart';
-import 'package:ecommerce_app/src/views/components/header_text.dart';
+import 'package:ecommerce_app/src/services/order_service.dart';
+import 'package:ecommerce_app/src/services/stripe_service.dart';
 import 'package:flutter/material.dart';
 
 class CartScreen extends StatefulWidget {
@@ -12,6 +16,30 @@ class CartScreen extends StatefulWidget {
 
 class _CartScreenState extends State<CartScreen> {
   final CartService _cartService = CartService();
+  final StripeService _stripeService = StripeService();
+  final AddressService _addressService = AddressService();
+  final OrderService _orderService = OrderService();
+  
+  String? _selectedPaymentMethodId;
+  AddressModel? _selectedAddress;
+  bool _loadingAddress = true;
+  bool _processingPayment = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDefaultAddress();
+  }
+
+  Future<void> _loadDefaultAddress() async {
+    final address = await _addressService.getDefaultAddress();
+    if (mounted) {
+      setState(() {
+        _selectedAddress = address;
+        _loadingAddress = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -95,7 +123,7 @@ class _CartScreenState extends State<CartScreen> {
               ),
 
               // Resumen de pago
-              _buildPaymentSummary(subtotal, deliveryFee, total),
+              _buildPaymentSummary(subtotal, deliveryFee, total, cartItems),
             ],
           );
         },
@@ -147,7 +175,7 @@ class _CartScreenState extends State<CartScreen> {
     );
   }
 
-  Widget _buildPaymentSummary(double subtotal, double deliveryFee, double total) {
+  Widget _buildPaymentSummary(double subtotal, double deliveryFee, double total, List<QueryDocumentSnapshot> cartItems) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -214,29 +242,437 @@ class _CartScreenState extends State<CartScreen> {
               width: double.infinity,
               height: 55,
               child: ElevatedButton(
-                onPressed: () {
-                  _showCheckoutDialog(total);
-                },
+                onPressed: _processingPayment
+                    ? null
+                    : () {
+                        _showCheckoutDialog(total, cartItems);
+                      },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Theme.of(context).primaryColor,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(15),
                   ),
                 ),
-                child: const Text(
-                  'Proceder al Pago',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
+                child: _processingPayment
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
+                      )
+                    : const Text(
+                        'Proceder al Pago',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
               ),
             ),
           ],
         ),
       ),
     );
+  }
+
+  void _showCheckoutDialog(double total, List<QueryDocumentSnapshot> cartItems) async {
+    // Obtener métodos de pago
+    final paymentMethods = await _stripeService.getPaymentMethods();
+
+    if (!mounted) return;
+
+    if (paymentMethods.isEmpty) {
+      // No hay métodos de pago guardados
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Sin métodos de pago'),
+          content: const Text(
+            'Debes agregar un método de pago antes de realizar una compra.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Entendido'),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+
+    // Auto-seleccionar el método de pago predeterminado
+    String? selectedPaymentMethod = _selectedPaymentMethodId;
+    if (selectedPaymentMethod == null && paymentMethods.isNotEmpty) {
+      // Buscar el método de pago marcado como predeterminado
+      final defaultMethod = paymentMethods.firstWhere(
+        (method) {
+          final customer = method['customer'] as String?;
+          return customer != null;
+        },
+        orElse: () => paymentMethods.first,
+      );
+      selectedPaymentMethod = defaultMethod['id'] as String;
+    }
+
+    // Mostrar diálogo de checkout
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return DraggableScrollableSheet(
+              initialChildSize: 0.7,
+              minChildSize: 0.5,
+              maxChildSize: 0.9,
+              expand: false,
+              builder: (context, scrollController) {
+                return Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Confirmar Pedido',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const Divider(),
+                      const SizedBox(height: 15),
+
+                      // Dirección de entrega
+                      const Text(
+                        'Dirección de entrega',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      if (_selectedAddress != null)
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[100],
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.location_on,
+                                color: Theme.of(context).primaryColor,
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      _selectedAddress!.name,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    Text(
+                                      _selectedAddress!.fullAddress,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.grey[600],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      else
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.orange[50],
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Text(
+                            '⚠️ No has seleccionado una dirección de entrega',
+                            style: TextStyle(color: Colors.orange),
+                          ),
+                        ),
+
+                      const SizedBox(height: 20),
+
+                      // Método de pago
+                      const Text(
+                        'Método de pago',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Expanded(
+                        child: ListView.builder(
+                          controller: scrollController,
+                          itemCount: paymentMethods.length,
+                          itemBuilder: (context, index) {
+                            final method = paymentMethods[index];
+                            final card = method['card'] as Map<String, dynamic>;
+                            final brand = card['brand'] as String;
+                            final last4 = card['last4'] as String;
+                            final paymentMethodId = method['id'] as String;
+                            final isSelected =
+                                selectedPaymentMethod == paymentMethodId;
+
+                            return RadioListTile<String>(
+                              value: paymentMethodId,
+                              groupValue: selectedPaymentMethod,
+                              onChanged: (value) {
+                                setModalState(() {
+                                  selectedPaymentMethod = value;
+                                });
+                              },
+                              title: Text(
+                                '${_getCardBrandName(brand)} •••• $last4',
+                              ),
+                              secondary: Icon(
+                                Icons.credit_card,
+                                color: isSelected
+                                    ? Theme.of(context).primaryColor
+                                    : Colors.grey,
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+
+                      const SizedBox(height: 15),
+
+                      // Resumen
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.grey[50],
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Column(
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text('Total'),
+                                Text(
+                                  '\$${total.toStringAsFixed(0)} DOP',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 18,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(height: 15),
+
+                      // Botón de confirmar
+                      SizedBox(
+                        width: double.infinity,
+                        height: 50,
+                        child: ElevatedButton(
+                          onPressed: selectedPaymentMethod == null ||
+                                  _selectedAddress == null
+                              ? null
+                              : () async {
+                                  Navigator.pop(context);
+                                  await _processPayment(
+                                    total,
+                                    cartItems,
+                                    selectedPaymentMethod!,
+                                  );
+                                },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Theme.of(context).primaryColor,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: const Text(
+                            'Confirmar y Pagar',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _processPayment(
+    double total,
+    List<QueryDocumentSnapshot> cartItems,
+    String paymentMethodId,
+  ) async {
+    setState(() => _processingPayment = true);
+
+    try {
+      // 1. Crear Payment Intent
+      final paymentIntent = await _stripeService.createPaymentIntent(
+        amount: total,
+        currency: 'DOP',
+        paymentMethodId: paymentMethodId,
+      );
+
+      if (paymentIntent == null) {
+        _showError('No se pudo crear la intención de pago');
+        setState(() => _processingPayment = false);
+        return;
+      }
+
+      final status = paymentIntent['status'] as String;
+
+      if (status == 'succeeded' || status == 'processing') {
+        // 2. Crear el pedido
+        final items = cartItems.map((doc) {
+          final data = doc.data() as Map<String, dynamic>;
+          return OrderItem(
+            productId: doc.id,
+            name: data['name'] ?? '',
+            description: data['description'] ?? '',
+            imageUrl: data['imageUrl'] ?? '',
+            price: (data['price'] ?? 0.0).toDouble(),
+            quantity: data['quantity'] ?? 1,
+            restaurantName: data['restaurantName'] ?? '',
+          );
+        }).toList();
+
+        final order = OrderModel(
+          id: '',
+          userId: '',
+          items: items,
+          subtotal: total - 150.0,
+          deliveryFee: 150.0,
+          total: total,
+          status: 'pending',
+          createdAt: DateTime.now(),
+          addressId: _selectedAddress?.id,
+          addressName: _selectedAddress?.name,
+          fullAddress: _selectedAddress?.fullAddress,
+          paymentMethodId: paymentMethodId,
+          paymentIntentId: paymentIntent['paymentIntentId'],
+        );
+
+        final orderId = await _orderService.createOrder(order);
+
+        if (orderId != null) {
+          // 3. Vaciar el carrito
+          await _cartService.clearCart();
+
+          if (mounted) {
+            setState(() => _processingPayment = false);
+
+            // Mostrar éxito
+            showDialog(
+              context: context,
+              barrierDismissible: false,
+              builder: (context) => AlertDialog(
+                title: const Row(
+                  children: [
+                    Icon(Icons.check_circle, color: Colors.green, size: 30),
+                    SizedBox(width: 10),
+                    Text('¡Pago Exitoso!'),
+                  ],
+                ),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Tu pedido ha sido confirmado.'),
+                    const SizedBox(height: 10),
+                    Text(
+                      'ID de pedido: $orderId',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                  ],
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      Navigator.pop(context);
+                    },
+                    child: const Text('Ver mis pedidos'),
+                  ),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      Navigator.pop(context);
+                    },
+                    child: const Text('Aceptar'),
+                  ),
+                ],
+              ),
+            );
+          }
+        } else {
+          _showError('No se pudo crear el pedido');
+          setState(() => _processingPayment = false);
+        }
+      } else {
+        _showError('El pago no pudo ser procesado: $status');
+        setState(() => _processingPayment = false);
+      }
+    } catch (e) {
+      print('Error procesando pago: $e');
+      _showError('Error al procesar el pago');
+      setState(() => _processingPayment = false);
+    }
+  }
+
+  void _showError(String message) {
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  String _getCardBrandName(String brand) {
+    switch (brand.toLowerCase()) {
+      case 'visa':
+        return 'Visa';
+      case 'mastercard':
+        return 'Mastercard';
+      case 'amex':
+        return 'American Express';
+      default:
+        return brand.toUpperCase();
+    }
   }
 
   void _showClearCartDialog() {
@@ -273,35 +709,8 @@ class _CartScreenState extends State<CartScreen> {
     );
   }
 
-  void _showCheckoutDialog(double total) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text("Confirmar Pedido"),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text("Total a pagar: \$${total.toStringAsFixed(0)} DOP"),
-              const SizedBox(height: 10),
-              const Text(
-                "Esta funcionalidad estará disponible próximamente.",
-                style: TextStyle(color: Colors.grey, fontSize: 13),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text("Cerrar"),
-            ),
-          ],
-        );
-      },
-    );
-  }
 }
+
 
 // Widget para cada item del carrito
 class _CartItemCard extends StatelessWidget {
