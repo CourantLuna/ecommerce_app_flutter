@@ -5,6 +5,7 @@ import 'package:ecommerce_app/src/services/address_service.dart';
 import 'package:ecommerce_app/src/services/cart_service.dart';
 import 'package:ecommerce_app/src/services/order_service.dart';
 import 'package:ecommerce_app/src/services/stripe_service.dart';
+import 'package:ecommerce_app/src/views/screens/tabs_screens/tab_screen.dart';
 import 'package:flutter/material.dart';
 
 class CartScreen extends StatefulWidget {
@@ -307,15 +308,19 @@ class _CartScreenState extends State<CartScreen> {
     // Auto-seleccionar el método de pago predeterminado
     String? selectedPaymentMethod = _selectedPaymentMethodId;
     if (selectedPaymentMethod == null && paymentMethods.isNotEmpty) {
-      // Buscar el método de pago marcado como predeterminado
-      final defaultMethod = paymentMethods.firstWhere(
-        (method) {
-          final customer = method['customer'] as String?;
-          return customer != null;
-        },
-        orElse: () => paymentMethods.first,
-      );
-      selectedPaymentMethod = defaultMethod['id'] as String;
+      // Obtener el método predeterminado del cliente en Stripe
+      final defaultPaymentMethodId = await _stripeService.getDefaultPaymentMethod();
+      
+      if (defaultPaymentMethodId != null) {
+        // Verificar que el método predeterminado esté en la lista
+        final hasDefault = paymentMethods.any(
+          (method) => method['id'] == defaultPaymentMethodId,
+        );
+        selectedPaymentMethod = hasDefault ? defaultPaymentMethodId : paymentMethods.first['id'] as String;
+      } else {
+        // Si no hay predeterminado, seleccionar el primero
+        selectedPaymentMethod = paymentMethods.first['id'] as String;
+      }
     }
 
     // Mostrar diálogo de checkout
@@ -620,15 +625,22 @@ class _CartScreenState extends State<CartScreen> {
                 actions: [
                   TextButton(
                     onPressed: () {
-                      Navigator.pop(context);
-                      Navigator.pop(context);
+                      Navigator.pop(context); // Cerrar diálogo de éxito
+                      // Volver al TabScreen con el tab de pedidos activo
+                      Navigator.pushAndRemoveUntil(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const TabScreen(initialTab: 1),
+                        ),
+                        (route) => false,
+                      );
                     },
                     child: const Text('Ver mis pedidos'),
                   ),
                   ElevatedButton(
                     onPressed: () {
-                      Navigator.pop(context);
-                      Navigator.pop(context);
+                      Navigator.pop(context); // Cerrar diálogo de éxito
+                      Navigator.pop(context); // Cerrar pantalla de carrito
                     },
                     child: const Text('Aceptar'),
                   ),

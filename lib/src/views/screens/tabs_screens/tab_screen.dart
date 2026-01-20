@@ -7,14 +7,23 @@ import 'package:ecommerce_app/src/views/screens/tabs_screens/profile_screen/prof
 void main() => runApp(TabScreen());
 
 class TabScreen extends StatefulWidget {
-  const TabScreen({super.key});
+  final int initialTab;
+  
+  const TabScreen({super.key, this.initialTab = 0});
 
   @override
   State<TabScreen> createState() => _TabScreenState();
 }
 
 class _TabScreenState extends State<TabScreen> {
-  int currentPage = 0;
+  late int currentPage;
+  
+  @override
+  void initState() {
+    super.initState();
+    currentPage = widget.initialTab;
+  }
+  
   final List<Widget> pages = [
     ExploreScreen(), // Explore Screen
     MyOrderScreen(), // My Order Screen
