@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart'; // <--- NUEVO
+import 'package:ecommerce_app/src/providers/theme_provider.dart';
 import 'package:ecommerce_app/src/services/auth_service.dart';
 import 'package:ecommerce_app/src/services/user_service.dart';
 import 'package:ecommerce_app/src/views/screens/settings_screen/manage_addresses_screen.dart';
@@ -6,6 +7,7 @@ import 'package:ecommerce_app/src/views/screens/settings_screen/payment_methods_
 import 'package:ecommerce_app/src/views/screens/tabs_screens/profile_screen/edit_profile_screen.dart'; // <--- NUEVO: Tu pantalla de edición
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -264,6 +266,41 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   title: "Ajustes",
                   icon: Icons.settings_outlined,
                   onPress: () {},
+                ),
+
+                const SizedBox(height: 20),
+                _buildSectionHeader("Apariencia"),
+
+                // Switch de tema oscuro/claro
+                Consumer<ThemeProvider>(
+                  builder: (context, themeProvider, child) {
+                    return ListTile(
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 5,
+                      ),
+                      leading: Icon(
+                        themeProvider.isDarkMode
+                            ? Icons.dark_mode
+                            : Icons.light_mode,
+                        color: Theme.of(context).primaryColor,
+                      ),
+                      title: Text(
+                        themeProvider.isDarkMode ? "Modo Oscuro" : "Modo Claro",
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      trailing: Switch(
+                        value: themeProvider.isDarkMode,
+                        onChanged: (value) {
+                          themeProvider.toggleTheme();
+                        },
+                        activeColor: Theme.of(context).primaryColor,
+                      ),
+                    );
+                  },
                 ),
 
                 const SizedBox(height: 20),

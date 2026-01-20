@@ -1,14 +1,17 @@
 import 'package:ecommerce_app/firebase_options.dart'; // <--- Importamos la config que creamos
+import 'package:ecommerce_app/src/providers/theme_provider.dart';
 import 'package:ecommerce_app/src/services/stripe_service.dart';
 import 'package:ecommerce_app/src/services/stripe_web_service.dart';
 import 'package:ecommerce_app/src/themes/app.theme.dart';
 import 'package:ecommerce_app/src/views/screens/cart_screen/cart_screen.dart';
+import 'package:ecommerce_app/src/views/screens/tabs_screens/explore_screen/category_restaurants_screen.dart';
 // import 'package:ecommerce_app/src/views/screens/auth_screens/login_screen.dart'; // <--- Importamos el Login
 import 'package:firebase_core/firebase_core.dart'; // <--- Importamos el Core de Firebase
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart'; // <--- 1. Importar dotenv
 import 'package:ecommerce_app/src/views/screens/auth_gate.dart'; // <--- Importa el Gate
+import 'package:provider/provider.dart';
 
 // Cambiamos a 'async' para poder esperar a que cargue Firebase
 void main() async {
@@ -33,7 +36,12 @@ void main() async {
   }
 
   // 3. Arrancamos la App
-  runApp(const IntecEcommerceApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (_) => ThemeProvider(),
+      child: const IntecEcommerceApp(),
+    ),
+  );
 }
 
 class IntecEcommerceApp extends StatelessWidget {
@@ -41,18 +49,36 @@ class IntecEcommerceApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'E-commerce Heydi',
-      theme: AppTheme.lightTheme(context),
-      debugShowCheckedModeBanner: false,
-      // 4. Cambiamos 'TabScreen' por 'LoginScreen' para obligar a iniciar sesión
-      home: const AuthGate(),
-      // Rutas nombradas
-      routes: {
-        '/cart': (context) => const CartScreen(),
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, child) {
+        return MaterialApp(
+          title: 'E-commerce Heydi',
+          theme: AppTheme.lightTheme(context),
+          darkTheme: AppTheme.darkTheme(context),
+          themeMode: themeProvider.themeMode,
+          debugShowCheckedModeBanner: false,
+          // 4. Cambiamos 'TabScreen' por 'LoginScreen' para obligar a iniciar sesión
+          home: const AuthGate(),
+          // Rutas nombradas
+          routes: {
+            '/cart': (context) => const CartScreen(),
+          },
+          onGenerateRoute: (settings) {
+            // Ruta dinámica para categorías de restaurantes
+            if (settings.name == '/category_restaurants') {
+              final args = settings.arguments as Map<String, dynamic>;
+              return MaterialPageRoute(
+                builder: (context) => CategoryRestaurantsScreen(
+                  category: args['category'] as String,
+                ),
+              );
+            }
+            return null;
+          },
+          //AdminSeederScreen()
+          
+        );
       },
-      //AdminSeederScreen()
-      
-      );
+    );
   }
 }

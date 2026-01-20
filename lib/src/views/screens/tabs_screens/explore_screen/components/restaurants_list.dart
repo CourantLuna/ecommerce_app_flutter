@@ -2,20 +2,25 @@ import 'package:ecommerce_app/src/models/firestore_models.dart';
 import 'package:ecommerce_app/src/views/components/header_text.dart';
 import 'package:ecommerce_app/src/views/components/restaurant_card_horizontal.dart';
 import 'package:ecommerce_app/src/views/components/restaurant_card_vertical.dart';
+import 'package:ecommerce_app/src/views/screens/tabs_screens/explore_screen/components/categories_slider.dart';
 import 'package:flutter/material.dart';
 
 class RestaurantsList extends StatelessWidget {
   final List<RestaurantModel> filteredRestaurants;
   final List<RestaurantModel> popularRestaurants;
+  final List<String> allCategories;
   final String searchQuery;
   final Function(BuildContext, RestaurantModel) onRestaurantTap;
+  final Function(BuildContext, String) onCategoryTap;
 
   const RestaurantsList({
     super.key,
     required this.filteredRestaurants,
     required this.popularRestaurants,
+    required this.allCategories,
     required this.searchQuery,
     required this.onRestaurantTap,
+    required this.onCategoryTap,
   });
 
   @override
@@ -99,7 +104,15 @@ class RestaurantsList extends StatelessWidget {
             ),
           ),
 
-        // --- SECCIÓN 2: TODOS LOS RESULTADOS ---
+        // --- SECCIÓN 2: CATEGORÍAS ---
+        SliverToBoxAdapter(
+          child: CategoriesSlider(
+            categories: allCategories,
+            onCategoryTap: onCategoryTap,
+          ),
+        ),
+
+        // --- SECCIÓN 3: TODOS LOS RESULTADOS ---
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.symmetric(

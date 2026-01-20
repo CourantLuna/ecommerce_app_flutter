@@ -160,15 +160,20 @@ class _ExploreScreenState extends State<ExploreScreen> {
                         .toList();
 
                     final filteredRestaurants = _filterRestaurants(allRestaurants);
-                    final popularRestaurants = filteredRestaurants
-                        .where((r) => r.rating >= 4.5)
-                        .toList();
+                    
+                    // Tomar solo los primeros 5 para populares
+                    final popularRestaurants = filteredRestaurants.take(5).toList();
+                    
+                    // Los demás restaurantes (excluyendo los primeros 5)
+                    final remainingRestaurants = filteredRestaurants.skip(5).toList();
 
                     return RestaurantsList(
-                      filteredRestaurants: filteredRestaurants,
+                      filteredRestaurants: remainingRestaurants,
                       popularRestaurants: popularRestaurants,
+                      allCategories: _categories.where((c) => c != "Todas").toList(),
                       searchQuery: _searchQuery,
                       onRestaurantTap: _goToDetail,
+                      onCategoryTap: _goToCategoryScreen,
                     );
                   },
                 ),
@@ -238,6 +243,14 @@ class _ExploreScreenState extends State<ExploreScreen> {
       MaterialPageRoute(
         builder: (_) => RestaurantDetailScreen(restaurant: restaurant),
       ),
+    );
+  }
+
+  void _goToCategoryScreen(BuildContext context, String category) {
+    Navigator.pushNamed(
+      context,
+      '/category_restaurants',
+      arguments: {'category': category},
     );
   }
 
