@@ -14,6 +14,7 @@ class PaymentMethodsScreen extends StatefulWidget {
 class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
   final StripeService _stripeService = StripeService();
   List<Map<String, dynamic>> _paymentMethods = [];
+  String? _defaultPaymentMethodId;
   bool _loading = true;
 
   @override
@@ -26,9 +27,11 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
     setState(() => _loading = true);
     try {
       final methods = await _stripeService.getPaymentMethods();
+      final defaultId = await _stripeService.getDefaultPaymentMethod();
       if (mounted) {
         setState(() {
           _paymentMethods = methods;
+          _defaultPaymentMethodId = defaultId;
           _loading = false;
         });
       }
@@ -278,9 +281,8 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
         final expYear = card['exp_year'];
         final paymentMethodId = method['id'] as String;
 
-        // Verificar si es el método predeterminado (esto requeriría otra consulta)
-        // Por simplicidad, asumimos que el primero es el predeterminado
-        final isDefault = index == 0;
+        // Verificar si es el método predeterminado
+        final isDefault = _defaultPaymentMethodId == paymentMethodId;
 
         return Card(
           margin: const EdgeInsets.only(bottom: 15),

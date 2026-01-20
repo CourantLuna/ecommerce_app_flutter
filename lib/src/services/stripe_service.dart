@@ -208,6 +208,37 @@ class StripeService {
   }
 
   // ========================================
+  // OBTENER MÉTODO DE PAGO PREDETERMINADO
+  // ========================================
+  Future<String?> getDefaultPaymentMethod() async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null) return null;
+
+      final userDoc = await _firestore.collection('users').doc(user.uid).get();
+      final stripeCustomerId = userDoc.data()?['stripeCustomerId'] as String?;
+
+      if (stripeCustomerId == null) return null;
+
+      final response = await http.get(
+        Uri.parse('https://api.stripe.com/v1/customers/$stripeCustomerId'),
+        headers: {
+          'Authorization': 'Bearer $_secretKey',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data['invoice_settings']?['default_payment_method'] as String?;
+      }
+      return null;
+    } catch (e) {
+      print('Error obteniendo método predeterminado: $e');
+      return null;
+    }
+  }
+
+  // ========================================
   // ESTABLECER MÉTODO DE PAGO COMO PREDETERMINADO
   // ========================================
   Future<bool> setDefaultPaymentMethod(String paymentMethodId) async {
