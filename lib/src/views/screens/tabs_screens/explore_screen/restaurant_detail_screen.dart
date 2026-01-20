@@ -83,16 +83,21 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: isDark ? Theme.of(context).scaffoldBackgroundColor : Colors.white,
       body: CustomScrollView(
         slivers: [
           // 1. APPBAR COLAPSABLE CON IMAGEN (Banner)
           SliverAppBar(
             expandedHeight: 250,
             pinned: true,
-            backgroundColor: Colors.white,
-            iconTheme: const IconThemeData(color: Colors.white, shadows: [Shadow(color: Colors.black, blurRadius: 10)]),
+            backgroundColor: isDark ? Theme.of(context).scaffoldBackgroundColor : Colors.white,
+            iconTheme: IconThemeData(
+              color: Colors.white,
+              shadows: [Shadow(color: Colors.black, blurRadius: 10)],
+            ),
             flexibleSpace: FlexibleSpaceBar(
               background: Stack(
                 fit: StackFit.expand,

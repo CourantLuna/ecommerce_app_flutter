@@ -15,11 +15,17 @@ class _MyOrderScreenState extends State<MyOrderScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'Mis Pedidos',
-          style: TextStyle(fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 20,
+            color: isDark ? Colors.white : Colors.black,
+          ),
         ),
         elevation: 0,
       ),
@@ -68,6 +74,8 @@ class _MyOrderScreenState extends State<MyOrderScreen> {
   }
 
   Widget _buildEmptyState() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -75,7 +83,7 @@ class _MyOrderScreenState extends State<MyOrderScreen> {
           Icon(
             Icons.shopping_bag_outlined,
             size: 100,
-            color: Colors.grey[300],
+            color: isDark ? Colors.grey[700] : Colors.grey[300],
           ),
           const SizedBox(height: 20),
           Text(
@@ -83,7 +91,7 @@ class _MyOrderScreenState extends State<MyOrderScreen> {
             style: TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.bold,
-              color: Colors.grey[700],
+              color: isDark ? Colors.grey[300] : Colors.grey[700],
             ),
           ),
           const SizedBox(height: 10),
@@ -91,7 +99,7 @@ class _MyOrderScreenState extends State<MyOrderScreen> {
             'Tus pedidos aparecerán aquí',
             style: TextStyle(
               fontSize: 14,
-              color: Colors.grey[500],
+              color: isDark ? Colors.grey[500] : Colors.grey[500],
             ),
           ),
           const SizedBox(height: 30),
@@ -160,10 +168,13 @@ class _OrderCardState extends State<_OrderCard> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
       elevation: 2,
+      color: isDark ? Theme.of(context).cardColor : null,
       child: Column(
         children: [
           InkWell(
@@ -193,9 +204,10 @@ class _OrderCardState extends State<_OrderCard> {
                   // ID de pedido
                   Text(
                     'Pedido #${widget.order.id.substring(0, 8).toUpperCase()}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
+                      color: isDark ? Colors.white : Colors.black87,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -205,7 +217,7 @@ class _OrderCardState extends State<_OrderCard> {
                     '${widget.order.items.length} ${widget.order.items.length == 1 ? 'producto' : 'productos'}',
                     style: TextStyle(
                       fontSize: 14,
-                      color: Colors.grey[600],
+                      color: isDark ? Colors.grey[400] : Colors.grey[600],
                     ),
                   ),
                   const SizedBox(height: 8),

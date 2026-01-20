@@ -40,6 +40,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     // 1. AGREGAMOS EL STREAMBUILDER PARA LEER DB EN TIEMPO REAL
     return StreamBuilder<DocumentSnapshot>(
       stream: UserService().getUserStream(),
@@ -81,13 +83,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
         final bool hasImage = photoUrl != null && photoUrl.isNotEmpty;
 
         return Scaffold(
-          backgroundColor: const Color(0xFFF5F6F9),
+          backgroundColor: isDark ? Theme.of(context).scaffoldBackgroundColor : const Color(0xFFF5F6F9),
           appBar: AppBar(
-            title: const Text(
+            title: Text(
               "Perfil",
               style: TextStyle(
-                color: Colors.black,
+                color: isDark ? Colors.white : Colors.black,
                 fontWeight: FontWeight.bold,
+                fontSize: 20,
               ),
             ),
             centerTitle: true,
@@ -165,14 +168,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   fullName,
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: Colors.black87,
+                    color: isDark ? Colors.white : Colors.black87,
                   ),
                 ),
                 Text(
                   email,
                   style: Theme.of(
                     context,
-                  ).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
+                  ).textTheme.bodyMedium?.copyWith(
+                    color: isDark ? Colors.grey[400] : Colors.grey[600],
+                  ),
                 ),
 
                 // 2. MOSTRAR TELÉFONO (Si existe)
@@ -188,7 +193,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           phone,
                           style: TextStyle(
                             fontSize: 14,
-                            color: Colors.grey[600],
+                            color: isDark ? Colors.grey[400] : Colors.grey[600],
                           ),
                         ),
                       ],
@@ -205,10 +210,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     child: Text(
                       bio,
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 14,
                         fontStyle: FontStyle.italic,
-                        color: Colors.black54,
+                        color: isDark ? Colors.grey[400] : Colors.black54,
                       ),
                     ),
                   ),
@@ -369,13 +374,13 @@ class _ProfileMenuWidget extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
       child: TextButton(
         style: TextButton.styleFrom(
-          foregroundColor: textColor ?? Colors.black87,
+          foregroundColor: textColor,
           padding: const EdgeInsets.all(20),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(15),
           ),
-          backgroundColor: Colors.white,
-          elevation: 0,
+          backgroundColor: Theme.of(context).cardColor,
+          elevation: 2,
           shadowColor: Colors.black.withOpacity(0.05),
         ),
         onPressed: onPress,

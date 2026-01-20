@@ -43,10 +43,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Editar Perfil", style: TextStyle(color: Colors.black)),
+        title: const Text("Editar Perfil", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),),
         backgroundColor: Colors.transparent,
         elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.black),
+        iconTheme: const IconThemeData(),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(defaultPadding),

@@ -207,17 +207,24 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: isDark ? Theme.of(context).scaffoldBackgroundColor : Colors.grey[50],
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: isDark ? Theme.of(context).scaffoldBackgroundColor : Colors.white,
         elevation: 0,
-        title: const Text(
+        title: Text(
           'Métodos de Pago',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            color: isDark ? Colors.white : Colors.black,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         centerTitle: true,
-        iconTheme: const IconThemeData(color: Colors.black),
+        iconTheme: IconThemeData(
+          color: isDark ? Colors.white : Colors.black,
+        ),
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
@@ -237,6 +244,8 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
   }
 
   Widget _buildEmptyState() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -244,7 +253,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
           Icon(
             Icons.credit_card_off,
             size: 100,
-            color: Colors.grey[400],
+            color: isDark ? Colors.grey[700] : Colors.grey[400],
           ),
           const SizedBox(height: 20),
           Text(
@@ -252,7 +261,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
             style: TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.bold,
-              color: Colors.grey[700],
+              color: isDark ? Colors.grey[300] : Colors.grey[700],
             ),
           ),
           const SizedBox(height: 10),
@@ -260,7 +269,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
             'Agrega una tarjeta para realizar pagos',
             style: TextStyle(
               fontSize: 14,
-              color: Colors.grey[500],
+              color: isDark ? Colors.grey[500] : Colors.grey[500],
             ),
           ),
         ],
@@ -269,6 +278,8 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
   }
 
   Widget _buildPaymentMethodsList() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return ListView.builder(
       padding: const EdgeInsets.all(15),
       itemCount: _paymentMethods.length,
@@ -287,6 +298,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
         return Card(
           margin: const EdgeInsets.only(bottom: 15),
           elevation: 2,
+          color: isDark ? Theme.of(context).cardColor : null,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(15),
             side: isDefault
@@ -315,16 +327,17 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                         children: [
                           Text(
                             '${_getCardBrandName(brand)} •••• $last4',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
+                              color: isDark ? Colors.white : Colors.black87,
                             ),
                           ),
                           Text(
                             'Vence $expMonth/$expYear',
                             style: TextStyle(
                               fontSize: 14,
-                              color: Colors.grey[600],
+                              color: isDark ? Colors.grey[400] : Colors.grey[600],
                             ),
                           ),
                         ],

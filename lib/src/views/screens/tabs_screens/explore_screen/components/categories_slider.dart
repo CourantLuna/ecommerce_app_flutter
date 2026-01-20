@@ -38,12 +38,15 @@ class CategoriesSlider extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 15),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 15),
           child: HeaderText(
             text: "Categorías",
             fontSize: 22,
-            color: Colors.black,
+           color: Theme.of(context).brightness == Brightness.dark
+                ? Colors.white
+                : Colors.black,
+
           ),
         ),
         const SizedBox(height: 15),

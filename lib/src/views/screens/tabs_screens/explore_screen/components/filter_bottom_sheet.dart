@@ -110,7 +110,9 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                     labelStyle: TextStyle(
                       color: isSelected
                           ? Theme.of(context).primaryColor
-                          : Colors.black,
+                          : Theme.of(context).brightness == Brightness.dark
+                              ? Colors.white
+                              : Colors.black,
                       fontWeight:
                           isSelected ? FontWeight.bold : FontWeight.normal,
                     ),

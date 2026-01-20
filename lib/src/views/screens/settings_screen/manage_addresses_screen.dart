@@ -17,16 +17,16 @@ class _ManageAddressesScreenState extends State<ManageAddressesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).primaryColor,
         elevation: 0,
-        title: const Text(
+        title: Text(
           'Mis Direcciones',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+          style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
-        iconTheme: const IconThemeData(color: Colors.black),
+        iconTheme: IconThemeData(color: Theme.of(context).textTheme.bodyLarge?.color),
       ),
       body: StreamBuilder<List<AddressModel>>(
         stream: _addressService.getAddressesStream(),
@@ -89,10 +89,10 @@ class _ManageAddressesScreenState extends State<ManageAddressesScreen> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _addNewAddress,
         backgroundColor: Theme.of(context).primaryColor,
-        icon: const Icon(Icons.add, color: Colors.white),
-        label: const Text(
+        icon: Icon(Icons.add),
+        label: Text(
           'Agregar Dirección',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          style: TextStyle(fontWeight: FontWeight.bold),
         ),
       ),
     );
@@ -121,11 +121,11 @@ class _ManageAddressesScreenState extends State<ManageAddressesScreen> {
           const SizedBox(height: 30),
           ElevatedButton.icon(
             onPressed: _addNewAddress,
-            icon: const Icon(Icons.add, color: Colors.white),
-            label: const Text('Agregar Dirección'),
+            icon: Icon(Icons.add, color: Theme.of(context).colorScheme.onPrimary),
+            label: Text('Agregar Dirección'),
             style: ElevatedButton.styleFrom(
               backgroundColor: Theme.of(context).primaryColor,
-              foregroundColor: Colors.white,
+              foregroundColor: Theme.of(context).colorScheme.onPrimary,
               padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(25),
@@ -218,7 +218,7 @@ class _AddressCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 15),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(15),
         border: address.isDefault
             ? Border.all(color: Theme.of(context).primaryColor, width: 2)

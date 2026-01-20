@@ -26,7 +26,7 @@ class SearchBar extends StatelessWidget {
           child: Container(
             height: 50,
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: Theme.of(context).cardColor,
               border: Border.all(color: Colors.grey.shade300),
               borderRadius: BorderRadius.circular(10),
               boxShadow: [
@@ -43,10 +43,17 @@ class SearchBar extends StatelessWidget {
                     controller: controller,
                     focusNode: focusNode,
                     onChanged: onSearchChanged,
+                    style: TextStyle(
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? Colors.white
+                          : Colors.black87,
+                    ),
                     decoration: const InputDecoration(
                       hintText: "Buscar restaurante...",
                       hintStyle: TextStyle(color: Colors.grey),
                       border: InputBorder.none,
+                      enabledBorder: InputBorder.none,
+                      focusedBorder: InputBorder.none,
                       contentPadding: EdgeInsets.only(bottom: 5),
                     ),
                   ),

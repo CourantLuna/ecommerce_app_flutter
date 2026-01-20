@@ -44,17 +44,24 @@ class _CartScreenState extends State<CartScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: isDark ? Theme.of(context).scaffoldBackgroundColor : Colors.grey[50],
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: isDark ? Theme.of(context).scaffoldBackgroundColor : Colors.white,
         elevation: 0,
-        title: const Text(
+        title: Text(
           'Mi Carrito',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            color: isDark ? Colors.white : Colors.black,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         centerTitle: true,
-        iconTheme: const IconThemeData(color: Colors.black),
+        iconTheme: IconThemeData(
+          color: isDark ? Colors.white : Colors.black,
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.delete_sweep),
@@ -133,6 +140,8 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   Widget _buildEmptyCart() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -140,7 +149,7 @@ class _CartScreenState extends State<CartScreen> {
           Icon(
             Icons.shopping_cart_outlined,
             size: 100,
-            color: Colors.grey[400],
+            color: isDark ? Colors.grey[700] : Colors.grey[400],
           ),
           const SizedBox(height: 20),
           Text(
@@ -148,7 +157,7 @@ class _CartScreenState extends State<CartScreen> {
             style: TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.bold,
-              color: Colors.grey[700],
+              color: isDark ? Colors.grey[300] : Colors.grey[700],
             ),
           ),
           const SizedBox(height: 10),
@@ -156,7 +165,7 @@ class _CartScreenState extends State<CartScreen> {
             "Agrega productos para empezar tu pedido",
             style: TextStyle(
               fontSize: 14,
-              color: Colors.grey[500],
+              color: isDark ? Colors.grey[500] : Colors.grey[500],
             ),
           ),
           const SizedBox(height: 30),
@@ -177,13 +186,17 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   Widget _buildPaymentSummary(double subtotal, double deliveryFee, double total, List<QueryDocumentSnapshot> cartItems) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? Theme.of(context).cardColor : Colors.white,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(25)),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.2),
+            color: isDark
+                ? Colors.black.withOpacity(0.3)
+                : Colors.grey.withOpacity(0.2),
             blurRadius: 10,
             offset: const Offset(0, -3),
           ),
@@ -367,7 +380,9 @@ class _CartScreenState extends State<CartScreen> {
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: Colors.grey[100],
+                            color: Theme.of(context).brightness == Brightness.dark
+                                ? Colors.grey[800]
+                                : Colors.grey[200],
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Row(
@@ -391,7 +406,9 @@ class _CartScreenState extends State<CartScreen> {
                                       _selectedAddress!.fullAddress,
                                       style: TextStyle(
                                         fontSize: 12,
-                                        color: Colors.grey[600],
+                                        color: Theme.of(context).brightness == Brightness.dark
+                                            ? Colors.grey[400]
+                                            : Colors.grey[600],
                                       ),
                                     ),
                                   ],
@@ -404,7 +421,9 @@ class _CartScreenState extends State<CartScreen> {
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: Colors.orange[50],
+                            color: Theme.of(context).brightness == Brightness.dark
+                                ? Colors.orange[900]
+                                : Colors.orange[50],
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: const Text(
@@ -452,7 +471,9 @@ class _CartScreenState extends State<CartScreen> {
                                 Icons.credit_card,
                                 color: isSelected
                                     ? Theme.of(context).primaryColor
-                                    : Colors.grey,
+                                    : Theme.of(context).brightness == Brightness.dark
+                                        ? Colors.grey[400]
+                                        : Colors.grey[600],
                               ),
                             );
                           },
@@ -465,7 +486,9 @@ class _CartScreenState extends State<CartScreen> {
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: Colors.grey[50],
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? Colors.grey[800]
+                              : Colors.grey[50],
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Column(
@@ -754,7 +777,7 @@ class _CartItemCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 15),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(15),
         boxShadow: [
           BoxShadow(
@@ -778,7 +801,9 @@ class _CartItemCard extends StatelessWidget {
               errorBuilder: (ctx, _, __) => Container(
                 height: 80,
                 width: 80,
-                color: Colors.grey[200],
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Colors.grey[800]
+                    : Colors.grey[200],
                 child: const Icon(Icons.fastfood, color: Colors.grey),
               ),
             ),
@@ -823,7 +848,7 @@ class _CartItemCard extends StatelessWidget {
                     ),
                     const Spacer(),
                     // Controles de cantidad
-                    _buildQuantityControls(),
+                    _buildQuantityControls(context),
                   ],
                 ),
               ],
@@ -842,10 +867,12 @@ class _CartItemCard extends StatelessWidget {
     );
   }
 
-  Widget _buildQuantityControls() {
+  Widget _buildQuantityControls(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.grey[100],
+        color: Theme.of(context).brightness == Brightness.dark
+            ? Colors.grey[800]
+            : Colors.grey[200],
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
@@ -860,7 +887,9 @@ class _CartItemCard extends StatelessWidget {
               child: Icon(
                 Icons.remove,
                 size: 16,
-                color: quantity > 1 ? Colors.black : Colors.grey,
+                color: quantity > 1 ? Colors.black : Theme.of(context).brightness == Brightness.dark
+                    ? Colors.grey[400]
+                    : Colors.grey[600],
               ),
             ),
           ),

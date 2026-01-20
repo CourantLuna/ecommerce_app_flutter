@@ -239,9 +239,15 @@ class _AddEditAddressScreenState extends State<AddEditAddressScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(_isEditMode ? 'Editar Dirección' : 'Agregar Dirección'),
+        title: Text(_isEditMode ? 'Editar Dirección' : 'Agregar Dirección',
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 20,
+          ),
+        ),
         backgroundColor: Theme.of(context).primaryColor,
         foregroundColor: Colors.white,
+        
       ),
       body: Form(
         key: _formKey,
@@ -257,7 +263,6 @@ class _AddEditAddressScreenState extends State<AddEditAddressScreen> {
                 hintText: 'Ej: Casa, Trabajo, Oficina...',
                 prefixIcon: const Icon(Icons.label),
                 filled: true,
-                fillColor: Colors.white,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
                   borderSide: BorderSide.none,
@@ -307,7 +312,6 @@ class _AddEditAddressScreenState extends State<AddEditAddressScreen> {
                 hintText: 'Buscar dirección, restaurante, lugar...',
                 prefixIcon: const Icon(Icons.search),
                 filled: true,
-                fillColor: Colors.white,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
                   borderSide: BorderSide.none,
@@ -457,7 +461,6 @@ class _AddEditAddressScreenState extends State<AddEditAddressScreen> {
                 hintText: 'Calle, número, sector, ciudad...',
                 prefixIcon: const Icon(Icons.location_on),
                 filled: true,
-                fillColor: Colors.white,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
                   borderSide: BorderSide.none,
@@ -477,7 +480,7 @@ class _AddEditAddressScreenState extends State<AddEditAddressScreen> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.grey[100],
+                color: Theme.of(context).cardColor,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Row(
@@ -499,7 +502,7 @@ class _AddEditAddressScreenState extends State<AddEditAddressScreen> {
             // Establecer como predeterminada
             Container(
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: Theme.of(context).cardColor,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: SwitchListTile(
@@ -531,15 +534,15 @@ class _AddEditAddressScreenState extends State<AddEditAddressScreen> {
                   ),
                 ),
                 child: _isSaving
-                    ? const CircularProgressIndicator(color: Colors.white)
+                    ? CircularProgressIndicator(color: Theme.of(context).colorScheme.onPrimary)
                     : Text(
                         _isEditMode
                             ? 'Actualizar Dirección'
                             : 'Guardar Dirección',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                          color: Theme.of(context).colorScheme.onPrimary,
                         ),
                       ),
               ),
@@ -553,10 +556,10 @@ class _AddEditAddressScreenState extends State<AddEditAddressScreen> {
   Widget _buildSectionTitle(String title) {
     return Text(
       title,
-      style: const TextStyle(
+      style: TextStyle(
         fontSize: 14,
         fontWeight: FontWeight.bold,
-        color: Colors.black87,
+        color: Theme.of(context).textTheme.bodyLarge?.color,
       ),
     );
   }

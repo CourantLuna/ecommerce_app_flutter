@@ -25,20 +25,24 @@ class RestaurantsList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     if (filteredRestaurants.isEmpty) {
-      return const Center(
+      return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
               Icons.search_off,
               size: 60,
-              color: Colors.grey,
+              color: isDark ? Colors.grey[600] : Colors.grey,
             ),
-            SizedBox(height: 10),
+            const SizedBox(height: 10),
             Text(
               "No encontramos restaurantes con esa búsqueda.",
-              style: TextStyle(color: Colors.grey),
+              style: TextStyle(
+                color: isDark ? Colors.grey[400] : Colors.grey,
+              ),
             ),
           ],
         ),
@@ -53,12 +57,12 @@ class RestaurantsList extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 15),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 15),
                   child: HeaderText(
                     text: "Populares",
                     fontSize: 22,
-                    color: Colors.black,
+                    color: isDark ? Colors.white : Colors.black,
                   ),
                 ),
                 const SizedBox(height: 15),
@@ -124,7 +128,7 @@ class RestaurantsList extends StatelessWidget {
                   ? "Todos los Restaurantes"
                   : "Resultados de búsqueda",
               fontSize: 22,
-              color: Colors.black,
+              color: isDark ? Colors.white : Colors.black,
             ),
           ),
         ),

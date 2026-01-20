@@ -17,18 +17,26 @@ class AddressSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     if (loading) {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: Colors.grey[100],
+          color: isDark ? Colors.grey[800] : Colors.grey[100],
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
           children: [
             Icon(Icons.location_on, color: Theme.of(context).primaryColor),
             const SizedBox(width: 12),
-            const Text("Cargando ubicación...", style: TextStyle(fontSize: 14)),
+            Text(
+              "Cargando ubicación...",
+              style: TextStyle(
+                fontSize: 14,
+                color: isDark ? Colors.white70 : Colors.black87,
+              ),
+            ),
           ],
         ),
       );
@@ -40,9 +48,11 @@ class AddressSelector extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: Colors.grey[100],
+          color: isDark ? Colors.grey[800] : Colors.grey[100],
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey[300]!),
+          border: Border.all(
+            color: isDark ? Colors.grey[700]! : Colors.grey[300]!,
+          ),
         ),
         child: Row(
           children: [
@@ -58,22 +68,29 @@ class AddressSelector extends StatelessWidget {
                 children: [
                   Text(
                     selectedAddress?.name ?? "Ubicación actual",
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 14,
+                      color: isDark ? Colors.white : Colors.black87,
                     ),
                   ),
                   if (selectedAddress != null)
                     Text(
                       selectedAddress!.fullAddress,
-                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: isDark ? Colors.grey[400] : Colors.grey[600],
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                 ],
               ),
             ),
-            Icon(Icons.keyboard_arrow_down, color: Colors.grey[600]),
+            Icon(
+              Icons.keyboard_arrow_down,
+              color: isDark ? Colors.grey[400] : Colors.grey[600],
+            ),
           ],
         ),
       ),

@@ -63,20 +63,26 @@ class _ProductCardState extends State<ProductCard> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? Theme.of(context).cardColor : Colors.white,
         borderRadius: BorderRadius.circular(15),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
+            color: isDark
+                ? Colors.black.withOpacity(0.3)
+                : Colors.grey.withOpacity(0.1),
             blurRadius: 10,
             offset: const Offset(0, 5),
           )
         ],
-        border: Border.all(color: Colors.grey.shade100),
+        border: Border.all(
+          color: isDark ? Colors.grey.shade800 : Colors.grey.shade100,
+        ),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -88,12 +94,19 @@ class _ProductCardState extends State<ProductCard> {
               children: [
                 Text(
                   widget.product.name,
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: isDark ? Colors.white : Colors.black87,
+                  ),
                 ),
                 const SizedBox(height: 5),
                 Text(
                   widget.product.description,
-                  style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                  style: TextStyle(
+                    color: isDark ? Colors.grey[400] : Colors.grey[600],
+                    fontSize: 13,
+                  ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -123,8 +136,11 @@ class _ProductCardState extends State<ProductCard> {
                   errorBuilder: (ctx, _, __) => Container(
                     height: 100,
                     width: 100,
-                    color: Colors.grey[200],
-                    child: const Icon(Icons.fastfood, color: Colors.grey),
+                    color: isDark ? Colors.grey[800] : Colors.grey[200],
+                    child: Icon(
+                      Icons.fastfood,
+                      color: isDark ? Colors.grey[600] : Colors.grey,
+                    ),
                   ),
                 ),
               ),
