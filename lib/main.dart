@@ -1,8 +1,11 @@
 import 'package:ecommerce_app/firebase_options.dart'; // <--- Importamos la config que creamos
+import 'package:ecommerce_app/src/services/stripe_service.dart';
+import 'package:ecommerce_app/src/services/stripe_web_service.dart';
 import 'package:ecommerce_app/src/themes/app.theme.dart';
 import 'package:ecommerce_app/src/views/screens/cart_screen/cart_screen.dart';
 // import 'package:ecommerce_app/src/views/screens/auth_screens/login_screen.dart'; // <--- Importamos el Login
 import 'package:firebase_core/firebase_core.dart'; // <--- Importamos el Core de Firebase
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart'; // <--- 1. Importar dotenv
 import 'package:ecommerce_app/src/views/screens/auth_gate.dart'; // <--- Importa el Gate
@@ -19,6 +22,15 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  // 3. Inicializar Stripe según la plataforma
+  if (kIsWeb) {
+    // En web, usar Stripe.js
+    StripeWebService().initialize();
+  } else {
+    // En móvil, usar flutter_stripe
+    await StripeService().initialize();
+  }
 
   // 3. Arrancamos la App
   runApp(const IntecEcommerceApp());

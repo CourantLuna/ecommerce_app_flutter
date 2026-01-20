@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart'; // <--- NUEVO
 import 'package:ecommerce_app/src/services/auth_service.dart';
 import 'package:ecommerce_app/src/services/user_service.dart';
 import 'package:ecommerce_app/src/views/screens/settings_screen/manage_addresses_screen.dart';
+import 'package:ecommerce_app/src/views/screens/settings_screen/payment_methods_screen.dart';
 import 'package:ecommerce_app/src/views/screens/tabs_screens/profile_screen/edit_profile_screen.dart'; // <--- NUEVO: Tu pantalla de edición
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -243,6 +244,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       context,
                       MaterialPageRoute(
                         builder: (context) => const ManageAddressesScreen(),
+                      ),
+                    );
+                  },
+                ),
+                _ProfileMenuWidget(
+                  title: "Mis Métodos de Pago",
+                  icon: Icons.payment_outlined,
+                  onPress: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const PaymentMethodsScreen(),
                       ),
                     );
                   },

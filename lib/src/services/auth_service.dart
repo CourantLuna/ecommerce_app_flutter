@@ -1,6 +1,7 @@
 import 'package:firebase_core/firebase_core.dart'; // Import necesario para Firebase.app()
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:ecommerce_app/src/services/stripe_service.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -49,6 +50,9 @@ class AuthService {
           photoUrl: defaultPhoto,
           authProvider: 'email'
         );
+
+        // Crear perfil de Stripe
+        await StripeService().ensureStripeCustomer(user);
       }
       return user;
     } catch (e) {
@@ -69,6 +73,8 @@ class AuthService {
       // Si entra, verificamos si tiene perfil en la DB. Si no, lo crea.
       if (result.user != null) {
         await _checkAndCreateMissingProfile(result.user!, provider: 'email');
+        // Verificar y crear perfil de Stripe si no existe
+        await StripeService().ensureStripeCustomer(result.user!);
       }
 
       return result.user;
@@ -87,6 +93,8 @@ class AuthService {
       // También verificamos aquí
       if (userCredential.user != null) {
         await _checkAndCreateMissingProfile(userCredential.user!, provider: 'google');
+        // Verificar y crear perfil de Stripe si no existe
+        await StripeService().ensureStripeCustomer(userCredential.user!);
       }
 
       return userCredential.user;
@@ -125,7 +133,8 @@ class AuthService {
       'photoUrl': photoUrl,
       'authProvider': authProvider,
       'createdAt': FieldValue.serverTimestamp(),
-      'isAdmin': false, 
+      'isAdmin': false,
+      'stripeCustomerId': '', // Se llenará después 
     });
   }
 
@@ -163,6 +172,7 @@ class AuthService {
         'authProvider': provider,
         'createdAt': FieldValue.serverTimestamp(),
         'isAdmin': false,
+        'stripeCustomerId': '', // Se llenará después
       });
     }
   }
