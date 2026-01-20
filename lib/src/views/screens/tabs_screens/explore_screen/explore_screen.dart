@@ -164,11 +164,16 @@ class _ExploreScreenState extends State<ExploreScreen> {
 
                     final filteredRestaurants = _filterRestaurants(allRestaurants);
                     
-                    // Tomar solo los primeros 5 para populares
-                    final popularRestaurants = filteredRestaurants.take(5).toList();
+                    // Solo dividir en populares/resto si NO hay filtros activos
+                    final hasActiveFilters = _searchQuery.isNotEmpty || _hasActiveFilters();
                     
-                    // Los demás restaurantes (excluyendo los primeros 5)
-                    final remainingRestaurants = filteredRestaurants.skip(5).toList();
+                    final popularRestaurants = hasActiveFilters 
+                        ? <RestaurantModel>[]  // No mostrar populares si hay filtros
+                        : filteredRestaurants.take(5).toList();
+                    
+                    final remainingRestaurants = hasActiveFilters
+                        ? filteredRestaurants  // Mostrar todos los resultados
+                        : filteredRestaurants.skip(5).toList();  // Excluir los primeros 5
 
                     return RestaurantsList(
                       filteredRestaurants: remainingRestaurants,
@@ -212,11 +217,13 @@ class _ExploreScreenState extends State<ExploreScreen> {
       // Filtro por categoría
       final matchesCategory = _selectedCategory == null ||
           _selectedCategory == "Todas" ||
-          rest.foodType == _selectedCategory;
+          rest.foodType.toLowerCase() == _selectedCategory!.toLowerCase();
 
-      // Filtro de precio
-      final averagePrice =
-          (rest.deliveryFee is num) ? (rest.deliveryFee as num).toDouble() : 0.0;
+      // Filtro de precio (deliveryFee es String, extraemos el número)
+      final priceMatch = RegExp(r'(\d+)').firstMatch(rest.deliveryFee);
+      final averagePrice = priceMatch != null
+          ? double.tryParse(priceMatch.group(1)!) ?? 0.0
+          : 0.0;
       final matchesPrice =
           averagePrice >= _priceRange.start && averagePrice <= _priceRange.end;
 

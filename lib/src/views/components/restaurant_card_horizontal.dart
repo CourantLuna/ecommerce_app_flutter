@@ -230,7 +230,9 @@ class _RestaurantCardHorizontalState extends State<RestaurantCardHorizontal> {
                     const SizedBox(width: 2),
                     Expanded(
                       child: Text(
-                        widget.subtitle,
+                        widget.restaurantData != null && widget.restaurantData!['address'] != null
+                            ? widget.restaurantData!['address']
+                            : widget.subtitle,
                         style: TextStyle(
                           color: isDark ? Colors.grey[400] : Colors.grey,
                           fontSize: 12,
