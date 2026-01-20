@@ -2,7 +2,6 @@ import 'package:ecommerce_app/src/views/screens/tabs_screens/favorites_screen/fa
 import 'package:flutter/material.dart';
 import 'package:ecommerce_app/src/views/screens/tabs_screens/explore_screen/explore_screen.dart';
 import 'package:ecommerce_app/src/views/screens/tabs_screens/my_order_screen/my_order_screen.dart';
-import 'package:ecommerce_app/src/views/screens/tabs_screens/favorite_screen/favorite_screen.dart';
 import 'package:ecommerce_app/src/views/screens/tabs_screens/profile_screen/profile_screen.dart';
 
 void main() => runApp(TabScreen());

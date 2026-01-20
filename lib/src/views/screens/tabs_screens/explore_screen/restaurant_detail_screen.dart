@@ -261,7 +261,10 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen> {
                 delegate: SliverChildBuilderDelegate(
                   (context, index) {
                     final product = products[index];
-                    return ProductCard(product: product);
+                    return ProductCard(
+                      product: product,
+                      restaurantName: widget.restaurant.name,
+                    );
                   },
                   childCount: products.length,
                 ),

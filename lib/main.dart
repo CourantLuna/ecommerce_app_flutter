@@ -1,5 +1,6 @@
 import 'package:ecommerce_app/firebase_options.dart'; // <--- Importamos la config que creamos
 import 'package:ecommerce_app/src/themes/app.theme.dart';
+import 'package:ecommerce_app/src/views/screens/cart_screen/cart_screen.dart';
 // import 'package:ecommerce_app/src/views/screens/auth_screens/login_screen.dart'; // <--- Importamos el Login
 import 'package:firebase_core/firebase_core.dart'; // <--- Importamos el Core de Firebase
 import 'package:flutter/material.dart';
@@ -33,7 +34,11 @@ class IntecEcommerceApp extends StatelessWidget {
       theme: AppTheme.lightTheme(context),
       debugShowCheckedModeBanner: false,
       // 4. Cambiamos 'TabScreen' por 'LoginScreen' para obligar a iniciar sesión
-      home: const AuthGate()
+      home: const AuthGate(),
+      // Rutas nombradas
+      routes: {
+        '/cart': (context) => const CartScreen(),
+      },
       //AdminSeederScreen()
       
       );

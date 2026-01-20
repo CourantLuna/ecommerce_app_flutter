@@ -1,10 +1,65 @@
 import 'package:ecommerce_app/src/models/firestore_models.dart';
+import 'package:ecommerce_app/src/services/cart_service.dart';
 import 'package:flutter/material.dart';
 
-class ProductCard extends StatelessWidget {
+class ProductCard extends StatefulWidget {
   final ProductModel product;
+  final String? restaurantName;
 
-  const ProductCard({super.key, required this.product});
+  const ProductCard({
+    super.key,
+    required this.product,
+    this.restaurantName,
+  });
+
+  @override
+  State<ProductCard> createState() => _ProductCardState();
+}
+
+class _ProductCardState extends State<ProductCard> {
+  final CartService _cartService = CartService();
+  bool _isAdding = false;
+
+  Future<void> _addToCart() async {
+    setState(() {
+      _isAdding = true;
+    });
+
+    final productData = {
+      'name': widget.product.name,
+      'description': widget.product.description,
+      'imageUrl': widget.product.imageUrl,
+      'price': widget.product.price,
+      'restaurantName': widget.restaurantName ?? '',
+    };
+
+    final success = await _cartService.addToCart(
+      productId: widget.product.id,
+      productData: productData,
+    );
+
+    if (mounted) {
+      setState(() {
+        _isAdding = false;
+      });
+
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${widget.product.name} añadido al carrito'),
+            duration: const Duration(seconds: 1),
+            action: SnackBarAction(
+              label: 'Ver Carrito',
+              textColor: Colors.white,
+              onPressed: () {
+                Navigator.pushNamed(context, '/cart');
+              },
+            ),
+          ),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -32,19 +87,19 @@ class ProductCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  product.name,
+                  widget.product.name,
                   style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                 ),
                 const SizedBox(height: 5),
                 Text(
-                  product.description,
+                  widget.product.description,
                   style: TextStyle(color: Colors.grey[600], fontSize: 13),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  "\$${product.price.toStringAsFixed(0)}",
+                  "\$${widget.product.price.toStringAsFixed(0)}",
                   style: TextStyle(
                     color: Theme.of(context).primaryColor,
                     fontWeight: FontWeight.w900,
@@ -61,7 +116,7 @@ class ProductCard extends StatelessWidget {
               ClipRRect(
                 borderRadius: BorderRadius.circular(12),
                 child: Image.network(
-                  product.imageUrl,
+                  widget.product.imageUrl,
                   height: 100,
                   width: 100,
                   fit: BoxFit.cover,
@@ -82,15 +137,7 @@ class ProductCard extends StatelessWidget {
                   child: Material(
                     color: Colors.transparent,
                     child: InkWell(
-                      onTap: () {
-                        // TODO: Implementar lógica de añadir al carrito
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('${product.name} añadido al carrito'),
-                            duration: const Duration(seconds: 1),
-                          ),
-                        );
-                      },
+                      onTap: _isAdding ? null : _addToCart,
                       borderRadius: BorderRadius.circular(15),
                       splashColor: Colors.white.withOpacity(0.3),
                       highlightColor: Colors.white.withOpacity(0.1),
@@ -107,11 +154,20 @@ class ProductCard extends StatelessWidget {
                             ),
                           ],
                         ),
-                        child: const Icon(
-                          Icons.add,
-                          size: 20,
-                          color: Colors.white,
-                        ),
+                        child: _isAdding
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                ),
+                              )
+                            : const Icon(
+                                Icons.add,
+                                size: 20,
+                                color: Colors.white,
+                              ),
                       ),
                     ),
                   ),

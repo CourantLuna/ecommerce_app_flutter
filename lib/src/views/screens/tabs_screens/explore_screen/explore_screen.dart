@@ -1,8 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:ecommerce_app/src/models/address_model.dart';
 import 'package:ecommerce_app/src/models/firestore_models.dart';
+import 'package:ecommerce_app/src/services/address_service.dart';
 import 'package:ecommerce_app/src/views/components/header_text.dart';
 import 'package:ecommerce_app/src/views/components/restaurant_card_horizontal.dart';
 import 'package:ecommerce_app/src/views/components/restaurant_card_vertical.dart';
+import 'package:ecommerce_app/src/views/screens/settings_screen/manage_addresses_screen.dart';
 import 'package:ecommerce_app/src/views/screens/tabs_screens/explore_screen/restaurant_detail_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
@@ -15,11 +18,16 @@ class ExploreScreen extends StatefulWidget {
 }
 
 class _ExploreScreenState extends State<ExploreScreen> {
+  final AddressService _addressService = AddressService();
+
   // 1. VARIABLES DE ESTADO (Para búsqueda y filtros)
   String _searchQuery = "";
   String? _selectedCategory; // Si es null, muestra todo.
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
+
+  AddressModel? _selectedAddress;
+  bool _loadingAddress = true;
 
   // Categorías disponibles (Deben coincidir con tu 'foodType' en Firebase)
   final List<String> _categories = [
@@ -30,13 +38,29 @@ class _ExploreScreenState extends State<ExploreScreen> {
     "Criolla",
     "Mexicana",
     "Pollo",
-    "Pizzas"
+    "Pizzas",
   ];
 
+  @override
+  void initState() {
+    super.initState();
+    _loadDefaultAddress();
+  }
+
+  Future<void> _loadDefaultAddress() async {
+    final address = await _addressService.getDefaultAddress();
+    if (mounted) {
+      setState(() {
+        _selectedAddress = address;
+        _loadingAddress = false;
+      });
+    }
+  }
+
   FirebaseFirestore get _firestore => FirebaseFirestore.instanceFor(
-        app: Firebase.app(),
-        databaseId: 'profileappdb',
-      );
+    app: Firebase.app(),
+    databaseId: 'profileappdb',
+  );
 
   @override
   void dispose() {
@@ -64,10 +88,15 @@ class _ExploreScreenState extends State<ExploreScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // SELECTOR DE DIRECCIÓN
+                    _buildAddressSelector(),
+                    const SizedBox(height: 15),
+
                     _topBar(context),
-                  
+
                     // Si hay filtro activo, mostramos un "chip" para poder quitarlo
-                    if (_selectedCategory != null && _selectedCategory != "Todas")
+                    if (_selectedCategory != null &&
+                        _selectedCategory != "Todas")
                       Padding(
                         padding: const EdgeInsets.only(top: 10),
                         child: ActionChip(
@@ -76,13 +105,15 @@ class _ExploreScreenState extends State<ExploreScreen> {
                           onPressed: () {
                             setState(() => _selectedCategory = null);
                           },
-                          backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
+                          backgroundColor: Theme.of(
+                            context,
+                          ).primaryColor.withOpacity(0.1),
                         ),
                       ),
                   ],
                 ),
               ),
-              
+
               // --- LISTA DE RESTAURANTES (DENTRO DEL STREAM) ---
               Expanded(
                 child: StreamBuilder<QuerySnapshot>(
@@ -93,7 +124,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
                     }
 
                     if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                      return const Center(child: Text("No hay restaurantes disponibles"));
+                      return const Center(
+                        child: Text("No hay restaurantes disponibles"),
+                      );
                     }
 
                     // 2. OBTENER Y FILTRAR LA DATA
@@ -105,35 +138,52 @@ class _ExploreScreenState extends State<ExploreScreen> {
                     // LÓGICA DE FILTRADO
                     final filteredRestaurants = allRestaurants.where((rest) {
                       // A. Filtro por Texto (Buscador)
-                      final matchesSearch = _searchQuery.isEmpty || 
-                                            rest.name.toLowerCase().contains(_searchQuery.toLowerCase()) || 
-                                            rest.tags.any((tag) => tag.toLowerCase().contains(_searchQuery.toLowerCase()));
-                      
+                      final matchesSearch =
+                          _searchQuery.isEmpty ||
+                          rest.name.toLowerCase().contains(
+                            _searchQuery.toLowerCase(),
+                          ) ||
+                          rest.tags.any(
+                            (tag) => tag.toLowerCase().contains(
+                              _searchQuery.toLowerCase(),
+                            ),
+                          );
+
                       // B. Filtro por Categoría (Botón de ajustes)
-                      final matchesCategory = _selectedCategory == null || 
-                                              _selectedCategory == "Todas" || 
-                                              rest.foodType == _selectedCategory;
+                      final matchesCategory =
+                          _selectedCategory == null ||
+                          _selectedCategory == "Todas" ||
+                          rest.foodType == _selectedCategory;
 
                       return matchesSearch && matchesCategory;
                     }).toList();
 
                     // 3. Preparar las listas para la UI
-                    final popularRestaurants = filteredRestaurants.where((r) => r.rating >= 4.5).toList();
-                    
+                    final popularRestaurants = filteredRestaurants
+                        .where((r) => r.rating >= 4.5)
+                        .toList();
+
                     // SI NO HAY RESULTADOS
                     if (filteredRestaurants.isEmpty) {
                       return const Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.search_off, size: 60, color: Colors.grey),
+                            Icon(
+                              Icons.search_off,
+                              size: 60,
+                              color: Colors.grey,
+                            ),
                             SizedBox(height: 10),
-                            Text("No encontramos restaurantes con esa búsqueda.", style: TextStyle(color: Colors.grey)),
+                            Text(
+                              "No encontramos restaurantes con esa búsqueda.",
+                              style: TextStyle(color: Colors.grey),
+                            ),
                           ],
                         ),
                       );
                     }
-                    
+
                     return CustomScrollView(
                       slivers: [
                         // --- SECCIÓN 1: POPULARES (Ocultar si no hay populares en la búsqueda) ---
@@ -144,7 +194,11 @@ class _ExploreScreenState extends State<ExploreScreen> {
                               children: [
                                 const Padding(
                                   padding: EdgeInsets.symmetric(horizontal: 15),
-                                  child: HeaderText(text: "Populares", fontSize: 22, color: Colors.black),
+                                  child: HeaderText(
+                                    text: "Populares",
+                                    fontSize: 22,
+                                    color: Colors.black,
+                                  ),
                                 ),
                                 const SizedBox(height: 15),
                                 SizedBox(
@@ -192,49 +246,55 @@ class _ExploreScreenState extends State<ExploreScreen> {
                         // --- SECCIÓN 2: TODOS LOS RESULTADOS ---
                         SliverToBoxAdapter(
                           child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 15,
+                              vertical: 10,
+                            ),
                             child: HeaderText(
-                              text: _searchQuery.isEmpty ? "Todos los Restaurantes" : "Resultados de búsqueda", 
-                              fontSize: 22, 
-                              color: Colors.black
+                              text: _searchQuery.isEmpty
+                                  ? "Todos los Restaurantes"
+                                  : "Resultados de búsqueda",
+                              fontSize: 22,
+                              color: Colors.black,
                             ),
                           ),
                         ),
-                        
+
                         SliverPadding(
                           padding: const EdgeInsets.symmetric(horizontal: 15),
                           sliver: SliverList(
-                            delegate: SliverChildBuilderDelegate(
-                              (context, index) {
-                                final rest = filteredRestaurants[index];
-                                return GestureDetector(
-                                  onTap: () => _goToDetail(context, rest),
-                                  child: RestaurantCardHorizontal(
-                                    restaurantId: rest.id,
-                                    title: rest.name,
-                                    subtitle: "${rest.foodType} • ${rest.deliveryTime}",
-                                    imageUrl: rest.imageUrl,
-                                    rating: rest.rating,
-                                    ratingsCount: rest.ratingCount,
-                                    discountTag: null,
-                                    restaurantData: {
-                                      'name': rest.name,
-                                      'imageUrl': rest.imageUrl,
-                                      'foodType': rest.foodType,
-                                      'rating': rest.rating,
-                                      'ratingCount': rest.ratingCount,
-                                      'deliveryTime': rest.deliveryTime,
-                                      'deliveryFee': rest.deliveryFee,
-                                      'address': rest.address,
-                                      'tags': rest.tags,
-                                      'latitude': rest.latitude,
-                                      'longitude': rest.longitude,
-                                    },
-                                  ),
-                                );
-                              },
-                              childCount: filteredRestaurants.length,
-                            ),
+                            delegate: SliverChildBuilderDelegate((
+                              context,
+                              index,
+                            ) {
+                              final rest = filteredRestaurants[index];
+                              return GestureDetector(
+                                onTap: () => _goToDetail(context, rest),
+                                child: RestaurantCardHorizontal(
+                                  restaurantId: rest.id,
+                                  title: rest.name,
+                                  subtitle:
+                                      "${rest.foodType} • ${rest.deliveryTime}",
+                                  imageUrl: rest.imageUrl,
+                                  rating: rest.rating,
+                                  ratingsCount: rest.ratingCount,
+                                  discountTag: null,
+                                  restaurantData: {
+                                    'name': rest.name,
+                                    'imageUrl': rest.imageUrl,
+                                    'foodType': rest.foodType,
+                                    'rating': rest.rating,
+                                    'ratingCount': rest.ratingCount,
+                                    'deliveryTime': rest.deliveryTime,
+                                    'deliveryFee': rest.deliveryFee,
+                                    'address': rest.address,
+                                    'tags': rest.tags,
+                                    'latitude': rest.latitude,
+                                    'longitude': rest.longitude,
+                                  },
+                                ),
+                              );
+                            }, childCount: filteredRestaurants.length),
                           ),
                         ),
 
@@ -250,16 +310,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
-          // TODO: Navegar a la pantalla de carrito/pago
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Ir al carrito - Funcionalidad pendiente'),
-              duration: Duration(seconds: 2),
-            ),
-          );
+          Navigator.pushNamed(context, '/cart');
         },
         backgroundColor: Theme.of(context).primaryColor,
-        icon: const Icon(Icons.shopping_cart, color: Colors.white,),
+        icon: const Icon(Icons.shopping_cart, color: Colors.white),
         label: const Text(
           'Ir a carrito',
           style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
@@ -290,7 +344,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
               color: Colors.white,
               border: Border.all(color: Colors.grey.shade300),
               borderRadius: BorderRadius.circular(10),
-              boxShadow: [BoxShadow(color: Colors.grey.withOpacity(0.1), blurRadius: 5)]
+              boxShadow: [
+                BoxShadow(color: Colors.grey.withOpacity(0.1), blurRadius: 5),
+              ],
             ),
             padding: const EdgeInsets.symmetric(horizontal: 15),
             child: Row(
@@ -304,14 +360,15 @@ class _ExploreScreenState extends State<ExploreScreen> {
                     focusNode: _searchFocusNode,
                     onChanged: (value) {
                       setState(() {
-                        _searchQuery = value; // <--- AQUÍ ACTUALIZAMOS LA BÚSQUEDA
+                        _searchQuery =
+                            value; // <--- AQUÍ ACTUALIZAMOS LA BÚSQUEDA
                       });
                     },
                     decoration: const InputDecoration(
                       hintText: "Buscar restaurante...",
                       hintStyle: TextStyle(color: Colors.grey),
                       border: InputBorder.none,
-                      contentPadding: EdgeInsets.only(bottom: 5)
+                      contentPadding: EdgeInsets.only(bottom: 5),
                     ),
                   ),
                 ),
@@ -322,14 +379,18 @@ class _ExploreScreenState extends State<ExploreScreen> {
                       _searchController.clear();
                       setState(() => _searchQuery = "");
                     },
-                    child: const Icon(Icons.close, color: Colors.grey, size: 20),
-                  )
+                    child: const Icon(
+                      Icons.close,
+                      color: Colors.grey,
+                      size: 20,
+                    ),
+                  ),
               ],
             ),
           ),
         ),
         const SizedBox(width: 15),
-        
+
         // BOTÓN DE FILTROS
         GestureDetector(
           onTap: () => _showFilterModal(context), // <--- ABRIR MODAL
@@ -338,8 +399,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
             width: 50,
             decoration: BoxDecoration(
               // Cambia de color si hay un filtro activo
-              color: (_selectedCategory != null && _selectedCategory != "Todas") 
-                  ? Colors.black87 
+              color: (_selectedCategory != null && _selectedCategory != "Todas")
+                  ? Colors.black87
                   : Theme.of(context).primaryColor,
               borderRadius: BorderRadius.circular(10),
             ),
@@ -354,7 +415,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
   void _showFilterModal(BuildContext context) {
     showModalBottomSheet(
       context: context,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
       builder: (context) {
         return Container(
           padding: const EdgeInsets.all(20),
@@ -362,21 +425,32 @@ class _ExploreScreenState extends State<ExploreScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text("Filtrar por Categoría", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              const Text(
+                "Filtrar por Categoría",
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
               const SizedBox(height: 20),
               Wrap(
                 spacing: 10,
                 runSpacing: 10,
                 children: _categories.map((category) {
-                  final isSelected = _selectedCategory == category || (_selectedCategory == null && category == "Todas");
+                  final isSelected =
+                      _selectedCategory == category ||
+                      (_selectedCategory == null && category == "Todas");
                   return FilterChip(
                     label: Text(category),
                     selected: isSelected,
-                    selectedColor: Theme.of(context).primaryColor.withOpacity(0.2),
+                    selectedColor: Theme.of(
+                      context,
+                    ).primaryColor.withOpacity(0.2),
                     checkmarkColor: Theme.of(context).primaryColor,
                     labelStyle: TextStyle(
-                      color: isSelected ? Theme.of(context).primaryColor : Colors.black,
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal
+                      color: isSelected
+                          ? Theme.of(context).primaryColor
+                          : Colors.black,
+                      fontWeight: isSelected
+                          ? FontWeight.bold
+                          : FontWeight.normal,
                     ),
                     onSelected: (bool selected) {
                       setState(() {
@@ -394,6 +468,242 @@ class _ExploreScreenState extends State<ExploreScreen> {
               const SizedBox(height: 20),
             ],
           ),
+        );
+      },
+    );
+  }
+
+  // --- SELECTOR DE DIRECCIÓN ---
+  Widget _buildAddressSelector() {
+    if (_loadingAddress) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.grey[100],
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.location_on, color: Theme.of(context).primaryColor),
+            const SizedBox(width: 12),
+            const Text("Cargando ubicación...", style: TextStyle(fontSize: 14)),
+          ],
+        ),
+      );
+    }
+
+    return InkWell(
+      onTap: () async {
+        final selected = await _showAddressPickerModal();
+        if (selected != null && mounted) {
+          setState(() {
+            _selectedAddress = selected;
+          });
+        }
+      },
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.grey[100],
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey[300]!),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              Icons.location_on,
+              color: Theme.of(context).primaryColor,
+              size: 24,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _selectedAddress?.name ?? "Ubicación actual",
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                  ),
+                  if (_selectedAddress != null)
+                    Text(
+                      _selectedAddress!.fullAddress,
+                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                ],
+              ),
+            ),
+            Icon(Icons.keyboard_arrow_down, color: Colors.grey[600]),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<AddressModel?> _showAddressPickerModal() async {
+    return showModalBottomSheet<AddressModel>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      isScrollControlled: true,
+      builder: (context) {
+        return DraggableScrollableSheet(
+          initialChildSize: 0.6,
+          minChildSize: 0.4,
+          maxChildSize: 0.9,
+          expand: false,
+          builder: (context, scrollController) {
+            return Column(
+              children: [
+                // Header
+                Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        "Seleccionar Dirección",
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      TextButton.icon(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  const ManageAddressesScreen(),
+                            ),
+                          );
+                        },
+                        icon: const Icon(Icons.settings, size: 18),
+                        label: const Text("Gestionar"),
+                      ),
+                    ],
+                  ),
+                ),
+                const Divider(height: 1),
+
+                // Lista de direcciones
+                Expanded(
+                  child: StreamBuilder<List<AddressModel>>(
+                    stream: _addressService.getAddressesStream(),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+
+                      final addresses = snapshot.data ?? [];
+
+                      return ListView(
+                        controller: scrollController,
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        children: [
+                          // Opción "Ubicación actual"
+                          ListTile(
+                            leading: CircleAvatar(
+                              backgroundColor: Theme.of(
+                                context,
+                              ).primaryColor.withOpacity(0.1),
+                              child: Icon(
+                                Icons.my_location,
+                                color: Theme.of(context).primaryColor,
+                              ),
+                            ),
+                            title: const Text("Ubicación actual"),
+                            subtitle: const Text("Usar mi ubicación actual"),
+                            trailing: _selectedAddress == null
+                                ? Icon(
+                                    Icons.check_circle,
+                                    color: Theme.of(context).primaryColor,
+                                  )
+                                : null,
+                            selected: _selectedAddress == null,
+                            onTap: () {
+                              Navigator.pop(context, null);
+                            },
+                          ),
+                          if (addresses.isNotEmpty) const Divider(),
+
+                          // Direcciones guardadas
+                          ...addresses.map((address) {
+                            final isSelected =
+                                _selectedAddress?.id == address.id;
+                            return ListTile(
+                              leading: CircleAvatar(
+                                backgroundColor: address.isDefault
+                                    ? Theme.of(
+                                        context,
+                                      ).primaryColor.withOpacity(0.1)
+                                    : Colors.grey[200],
+                                child: Icon(
+                                  Icons.location_on,
+                                  color: address.isDefault
+                                      ? Theme.of(context).primaryColor
+                                      : Colors.grey[600],
+                                ),
+                              ),
+                              title: Row(
+                                children: [
+                                  Text(address.name),
+                                  if (address.isDefault) ...[
+                                    const SizedBox(width: 8),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 2,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Theme.of(
+                                          context,
+                                        ).primaryColor.withOpacity(0.1),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Text(
+                                        "Predeterminada",
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          color: Theme.of(context).primaryColor,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                              subtitle: Text(
+                                address.fullAddress,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              trailing: isSelected
+                                  ? Icon(
+                                      Icons.check_circle,
+                                      color: Theme.of(context).primaryColor,
+                                    )
+                                  : null,
+                              selected: isSelected,
+                              onTap: () {
+                                Navigator.pop(context, address);
+                              },
+                            );
+                          }),
+                        ],
+                      );
+                    },
+                  ),
+                ),
+              ],
+            );
+          },
         );
       },
     );

@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart'; // <--- NUEVO
 import 'package:ecommerce_app/src/services/auth_service.dart';
 import 'package:ecommerce_app/src/services/user_service.dart';
+import 'package:ecommerce_app/src/views/screens/settings_screen/manage_addresses_screen.dart';
 import 'package:ecommerce_app/src/views/screens/tabs_screens/profile_screen/edit_profile_screen.dart'; // <--- NUEVO: Tu pantalla de edición
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -40,10 +41,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return StreamBuilder<DocumentSnapshot>(
       stream: UserService().getUserStream(),
       builder: (context, snapshot) {
-        
         // Estado de carga inicial
         if (snapshot.connectionState == ConnectionState.waiting) {
-           return const Scaffold(body: Center(child: CircularProgressIndicator()));
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
         }
 
         // Recuperar datos (si existen)
@@ -55,28 +57,35 @@ class _ProfileScreenState extends State<ProfileScreen> {
         // Variables seguras
         final String firstName = userData['firstName'] ?? '';
         final String lastName = userData['lastName'] ?? '';
-        
+
         // Nombre: Prioridad DB > Auth
-        final String fullName = firstName.isNotEmpty 
-            ? "$firstName $lastName" 
+        final String fullName = firstName.isNotEmpty
+            ? "$firstName $lastName"
             : (AuthService().currentUser?.displayName ?? "Usuario Invitado");
-            
-        final String email = userData['email'] ?? AuthService().currentUser?.email ?? "Sin correo";
-        
+
+        final String email =
+            userData['email'] ??
+            AuthService().currentUser?.email ??
+            "Sin correo";
+
         // NUEVOS CAMPOS
         final String phone = userData['phone'] ?? "";
         final String bio = userData['bio'] ?? "";
-        
+
         // Foto: Prioridad DB > Auth
-        final String photoUrl = userData['photoUrl'] ?? AuthService().currentUser?.photoURL;
+        final String photoUrl =
+            userData['photoUrl'] ?? AuthService().currentUser?.photoURL;
         final bool hasImage = photoUrl != null && photoUrl.isNotEmpty;
 
         return Scaffold(
           backgroundColor: const Color(0xFFF5F6F9),
           appBar: AppBar(
             title: const Text(
-              "Perfil", 
-              style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)
+              "Perfil",
+              style: TextStyle(
+                color: Colors.black,
+                fontWeight: FontWeight.bold,
+              ),
             ),
             centerTitle: true,
             backgroundColor: Colors.transparent,
@@ -98,7 +107,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             spreadRadius: 2,
                             blurRadius: 10,
                             color: Colors.black.withOpacity(0.1),
-                          )
+                          ),
                         ],
                       ),
                       child: CircleAvatar(
@@ -109,9 +118,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             : CircleAvatar(
                                 radius: 60,
                                 backgroundColor: Colors.transparent,
-                                backgroundImage: hasImage ? NetworkImage(photoUrl!) : null,
+                                backgroundImage: hasImage
+                                    ? NetworkImage(photoUrl!)
+                                    : null,
                                 child: !hasImage
-                                    ? const Icon(Icons.person, size: 60, color: Colors.grey)
+                                    ? const Icon(
+                                        Icons.person,
+                                        size: 60,
+                                        color: Colors.grey,
+                                      )
                                     : null,
                               ),
                       ),
@@ -129,15 +144,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             shape: BoxShape.circle,
                             border: Border.all(color: Colors.white, width: 3),
                           ),
-                          child: const Icon(Icons.camera_alt, color: Colors.white, size: 20),
+                          child: const Icon(
+                            Icons.camera_alt,
+                            color: Colors.white,
+                            size: 20,
+                          ),
                         ),
                       ),
                     ),
                   ],
                 ),
-                
+
                 const SizedBox(height: 20),
-                
+
                 // DATOS DE TEXTO
                 Text(
                   fullName,
@@ -148,9 +167,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 Text(
                   email,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Colors.grey[600],
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
                 ),
 
                 // 2. MOSTRAR TELÉFONO (Si existe)
@@ -164,7 +183,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         const SizedBox(width: 5),
                         Text(
                           phone,
-                          style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[600],
+                          ),
                         ),
                       ],
                     ),
@@ -173,14 +195,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 // 3. MOSTRAR BIO (Si existe)
                 if (bio.isNotEmpty)
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 40,
+                      vertical: 12,
+                    ),
                     child: Text(
                       bio,
                       textAlign: TextAlign.center,
                       style: const TextStyle(
-                        fontSize: 14, 
+                        fontSize: 14,
                         fontStyle: FontStyle.italic,
-                        color: Colors.black54
+                        color: Colors.black54,
                       ),
                     ),
                   ),
@@ -189,25 +214,38 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                 // ================= MENÚ =================
                 _buildSectionHeader("Cuenta"),
-                
+
                 // 4. BOTÓN EDITAR PERFIL (Redirecciona a EditProfileScreen)
                 _ProfileMenuWidget(
                   title: "Editar Perfil", // Cambiado nombre
-                  icon: Icons.edit,       // Cambiado icono
+                  icon: Icons.edit, // Cambiado icono
                   onPress: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => EditProfileScreen(currentData: userData),
+                        builder: (context) =>
+                            EditProfileScreen(currentData: userData),
                       ),
                     );
                   },
                 ),
-                
+
                 _ProfileMenuWidget(
                   title: "Notificaciones",
                   icon: Icons.notifications_none,
                   onPress: () {},
+                ),
+                _ProfileMenuWidget(
+                  title: "Mis Direcciones",
+                  icon: Icons.location_on_outlined,
+                  onPress: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ManageAddressesScreen(),
+                      ),
+                    );
+                  },
                 ),
                 _ProfileMenuWidget(
                   title: "Ajustes",
@@ -223,7 +261,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   icon: Icons.help_outline,
                   onPress: () {},
                 ),
-                
+
                 _ProfileMenuWidget(
                   title: "Cerrar Sesión",
                   icon: Icons.logout,
@@ -237,7 +275,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ),
         );
-      }
+      },
     );
   }
 
@@ -283,18 +321,24 @@ class _ProfileMenuWidget extends StatelessWidget {
         style: TextButton.styleFrom(
           foregroundColor: textColor ?? Colors.black87,
           padding: const EdgeInsets.all(20),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+          ),
           backgroundColor: Colors.white,
-          elevation: 0, 
+          elevation: 0,
           shadowColor: Colors.black.withOpacity(0.05),
         ),
         onPressed: onPress,
         child: Row(
           children: [
-            Icon(icon, size: 22, color: textColor ?? Theme.of(context).primaryColor),
+            Icon(
+              icon,
+              size: 22,
+              color: textColor ?? Theme.of(context).primaryColor,
+            ),
             const SizedBox(width: 20),
             Expanded(child: Text(title, style: const TextStyle(fontSize: 16))),
-            if (endIcon) 
+            if (endIcon)
               const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
           ],
         ),
