@@ -214,12 +214,22 @@ class _RestaurantCardVerticalState extends State<RestaurantCardVertical> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.9),
+                    color: isDark 
+                        ? Colors.grey[850]?.withOpacity(0.95)
+                        : Colors.white.withOpacity(0.95),
                     borderRadius: BorderRadius.circular(15),
+                    border: Border.all(
+                      color: isDark ? Colors.grey[700]! : Colors.grey[300]!,
+                      width: 0.5,
+                    ),
                   ),
-                  child: const Text(
+                  child: Text(
                     "20-30 min",
-                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: isDark ? Colors.white : Colors.black87,
+                    ),
                   ),
                 ),
               ),

@@ -63,8 +63,10 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
       }
 
       // 2. Usar Stripe.js Payment Element
+      final isDark = Theme.of(context).brightness == Brightness.dark;
       final result = await StripeWebService().createCheckoutSession(
         setupData['clientSecret'],
+        isDarkMode: isDark,
       );
 
       if (mounted) {

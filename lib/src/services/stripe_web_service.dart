@@ -19,7 +19,7 @@ class StripeWebService {
   }
 
   // Crear Checkout Session para agregar método de pago
-  Future<String?> createCheckoutSession(String clientSecret) async {
+  Future<String?> createCheckoutSession(String clientSecret, {required bool isDarkMode}) async {
     try {
       if (!js.context.hasProperty('Stripe')) {
         print('⚠️ Stripe no está disponible');
@@ -29,7 +29,7 @@ class StripeWebService {
       final stripe = js.context['stripeInstance'];
       
       // Redirigir a Checkout para Setup Mode
-      final result = await _redirectToCheckout(stripe, clientSecret);
+      final result = await _redirectToCheckout(stripe, clientSecret, isDarkMode);
       
       return result;
     } catch (e) {
@@ -38,7 +38,7 @@ class StripeWebService {
     }
   }
 
-  Future<String?> _redirectToCheckout(dynamic stripe, String clientSecret) async {
+  Future<String?> _redirectToCheckout(dynamic stripe, String clientSecret, bool isDarkMode) async {
     try {
       // Confirmar el setup usando Stripe Elements
       js.context.callMethod('eval', [
@@ -47,8 +47,8 @@ class StripeWebService {
           try {
             const stripe = window.stripeInstance;
             
-            // Detectar tema oscuro
-            const isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            // Usar el tema pasado desde Flutter
+            const isDark = $isDarkMode;
             
             // Crear elementos de Stripe
             const elements = stripe.elements({
